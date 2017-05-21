@@ -1,0 +1,41 @@
+﻿
+@{
+    ViewBag.Title = "StartPage";
+}
+
+@Html.Partial("StartViewBlock",
+    new ViewDataDictionary(){
+        new KeyValuePair<string, object>("title", "Scheduler"),
+        new KeyValuePair<string, object>("description", "Pretty good resource for organising your daily activity"),
+        new KeyValuePair<string, object>("colorName", "cornflowerblue"),
+        new KeyValuePair<string, object>("nextBlock", "#block2"),
+        new KeyValuePair<string, object>("id", "block1")
+    })
+
+@Html.Partial("StartViewBlock",
+    new ViewDataDictionary(){
+        new KeyValuePair<string, object>("title", "Scheduler"),
+        new KeyValuePair<string, object>("description", "Pretty good resource for organising your daily activity"),
+        new KeyValuePair<string, object>("colorName", "#ffc837"),
+        new KeyValuePair<string, object>("nextBlock", "#block3"),
+        new KeyValuePair<string, object>("id", "block2")
+    })
+
+@section scripts{
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $(".infoUrlBlock").mouseout(function () {
+                $(this).find(".infoUrl").fadeOut(500);
+            });
+
+            $(".infoUrlBlock").mouseover(function () {
+                $(this).find(".infoUrl").fadeIn(500);
+            });
+           
+        });
+
+    </script>
+    
+    }
