@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<ArrayOfStartPageBlockData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <StartPageBlockData>
+    <Id>block1</Id>
+    <Title>Scheduler</Title>
+    <Description>Pretty good resource for organising your daily activity</Description>
+    <ColorName>#bfe9ff</ColorName>
+    <NextBlock>#block2</NextBlock>
+    <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
+  </StartPageBlockData>
+  <StartPageBlockData>
+    <Id>block2</Id>
+    <Title>1. Plan your day</Title>
+    <Description>Pretty good resource for organising your daily activity</Description>
+    <ColorName>#77A1D3</ColorName>
+    <NextBlock>#block3</NextBlock>
+    <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
+  </StartPageBlockData>
+  <StartPageBlockData>
+    <Id>block3</Id>
+    <Title>2. Set new targets</Title>
+    <Description>Pretty good resource for organising your daily activity</Description>
+    <ColorName>#26a0da</ColorName>
+    <NextBlock>#block4</NextBlock>
+    <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
+  </StartPageBlockData>
+  <StartPageBlockData>
+    <Id>block4</Id>
+    <Title>3. Meet like-minders</Title>
+    <Description>Pretty good resource for organising your daily activity</Description>
+    <ColorName>#06beb6</ColorName>
+    <NextBlock>#block5</NextBlock>
+    <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
+  </StartPageBlockData>
+  <StartPageBlockData>
+    <Id>block5</Id>
+    <Title>4. Analyze your productivity</Title>
+    <Description>Pretty good resource for organising your daily activity</Description>
+    <ColorName>#ffaf7b</ColorName>
+    <NextBlock>#block6</NextBlock>
+    <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
+  </StartPageBlockData>
+  <StartPageBlockData>
+    <Id>block6</Id>
+    <Title>5. Get useful tips</Title>
+    <Description>Pretty good resource for organising your daily activity</Description>
+    <ColorName>#ff8235</ColorName>
+    <NextBlock>#block1</NextBlock>
+    <ArrowImageSrc>../../Common/Images/arrow_up.png</ArrowImageSrc>
+  </StartPageBlockData>
+</ArrayOfStartPageBlockData>
