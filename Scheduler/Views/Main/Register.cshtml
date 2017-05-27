@@ -3,7 +3,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div style="display: table;margin: auto;border: 1px solid green; border-radius: 5px; padding: 10px; margin-top: 10px;">
+<div style="display: table;margin: auto; background-color: white; border: 1px solid black; padding: 10px; margin-top: 10px;box-shadow: 10px 10px 5px #888888;">
     <div class="form-horizontal" style="padding: 20px;">
         <div class="form-group">
             <input name="first_name" class="form-control" placeholder="Name" type="text" />
@@ -22,7 +22,7 @@
         </div>
         <input type="button" name="register" style="margin: auto" class="btn btn-success btn-block" value="Register" />
         <div class="form-group" style="margin-top: 10px;">
-            <div class="col-xs-8 col-sm-8 col-lg-8 col-md-8 col-md-offset-2 col-lg-offset-2 text-center">
+            <div class="col-sm-8 col-sm-offset-2 text-center">
                 @Html.ActionLink("Go back", "StartPage", "Main")
             </div>
         </div>
