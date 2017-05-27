@@ -89,5 +89,6 @@ namespace Scheduler.Models
         [Display(Name = "Confirm new password")]
         [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+        public string Id { get; internal set; }
     }
 }

@@ -39,8 +39,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" id="sign_in" class="btn btn-success" data-dismiss="modal">Sign In</button>
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <div class="row">
+                    <button type="button" id="sign_in" class="btn btn-success col col-md-2" data-dismiss="modal">Sign In</button>
+                    <button type="button" id="forgot_password" class="btn btn-success col col-md-4" data-dismiss="modal">Forgot password</button>
+                    <button type="button" class="btn btn-default col col-md-2" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
 
@@ -80,6 +83,11 @@
                     }
                 });
             });
+
+            $("#forgot_password").click(function () {
+                window.location = '@Url.Action("ChangePassword", "Main")';
+            });
+
         });
 
     </script>

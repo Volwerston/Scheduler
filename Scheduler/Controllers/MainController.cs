@@ -124,5 +124,62 @@ namespace Scheduler.Controllers
         {
             return View();
         }
+
+        public ActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult ChangePassword(string email)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                client.BaseAddress = new Uri("http://localhost:24082/");
+
+                HttpResponseMessage response = client.GetAsync("api/Account/ChangeUserPassword?email=" + email).Result;
+            }
+
+
+            return RedirectToAction("StartPage");
+        }
+
+        public ActionResult SetNewPassword(string request_id)
+        {
+            ViewData["request_id"] = request_id;
+
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult SetNewPassword(string request_id, string password, string confirm_password)
+        {
+            if (password != confirm_password)
+            {
+                return RedirectToAction("SetNewPassword", "Main", new { request_id = request_id });
+            }
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                client.BaseAddress = new Uri("http://localhost:24082/");
+
+                HttpResponseMessage response = client.PostAsJsonAsync("api/Account/SetNewUserPassword",
+                    new Tuple<string, string, string>(request_id, password, confirm_password)
+                    ).Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("StartPage");
+                }
+            }
+
+            return RedirectToAction("SetNewPassword", "Main", request_id);
+        }
     }
 }

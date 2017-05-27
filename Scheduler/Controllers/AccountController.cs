@@ -148,7 +148,7 @@ namespace Scheduler.Controllers
                 return BadRequest(ModelState);
             }
 
-            IdentityResult result = await UserManager.AddPasswordAsync(User.Identity.GetUserId(), model.NewPassword);
+            IdentityResult result = await UserManager.AddPasswordAsync(model.Id, model.NewPassword);
 
             if (!result.Succeeded)
             {
@@ -323,6 +323,102 @@ namespace Scheduler.Controllers
             return logins;
         }
 
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<HttpResponseMessage> SetNewUserPassword(Tuple<string, string, string> data)
+        {
+            string request_id = data.Item1;
+            string password = data.Item2;
+
+            using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
+            {
+                string cmdString = "SELECT * FROM ChangePasswordLog WHERE RequestId=@id; DELETE FROM ChangePasswordLog WHERE RequestId=@id;";
+
+                SqlCommand cmd = new SqlCommand(cmdString, con);
+
+                cmd.Parameters.AddWithValue("@id", request_id);
+
+
+                try
+                {
+                    con.Open();
+
+                    DateTime date;
+                    string email = null;
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        if (rdr.Read())
+                        {
+                            email = rdr["Email"].ToString();
+                            date = Convert.ToDateTime(rdr["SendingTime"].ToString());
+                        }
+                    }
+
+                    string id = GetUserId(con, email);
+
+                    try
+                    {
+                        SetNullPassword(id);
+
+                        await SetPassword(new SetPasswordBindingModel { Id = id, NewPassword = data.Item2, ConfirmPassword = data.Item3 });
+
+                        return Request.CreateResponse(HttpStatusCode.OK, "OK");
+                    }
+                    catch
+                    {
+                        return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Internal server error");
+                    }
+                }
+                catch
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Internal server error");
+                }
+            }
+        }
+
+        private void SetNullPassword(string id)
+        {
+            using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
+            {
+                string cmdString = "UPDATE AspNetUsers SET PasswordHash=NULL WHERE Id=@id;";
+
+                SqlCommand cmd = new SqlCommand(cmdString, con);
+
+                cmd.Parameters.AddWithValue("@id", id);
+
+                try
+                {
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private string GetUserId(SqlConnection con, string email)
+        {
+            string toReturn = "";
+
+            string cmdString = "SELECT Id FROM AspNetUsers WHERE Email=@email;";
+
+            SqlCommand cmd = new SqlCommand(cmdString, con);
+
+            cmd.Parameters.AddWithValue("@email", email);
+
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                if (rdr.Read())
+                {
+                    return rdr["Id"].ToString();
+                }
+            }
+
+            return toReturn;
+        }
+
         private bool ConfirmAccount(string confirmationToken)
         {
             bool toReturn = false;
@@ -379,6 +475,82 @@ namespace Scheduler.Controllers
 
             return toReturn;
         }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public HttpResponseMessage ChangeUserPassword(string email)
+        {
+            string guid = Guid.NewGuid().ToString();
+
+            string letterSent = WriteChangePasswordLetter(email, guid);
+
+            if (letterSent == "OK")
+            {
+                using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
+                {
+                    string cmdString = "INSERT INTO ChangePasswordLog VALUES(GETDATE(), @RequestId, @mail);";
+
+                    SqlCommand cmd = new SqlCommand(cmdString, con);
+
+                    cmd.Parameters.AddWithValue("@RequestId", guid);
+                    cmd.Parameters.AddWithValue("@mail", email);
+
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+
+                        return Request.CreateResponse(HttpStatusCode.OK, "Letter was sent");
+                    }
+                    catch (Exception ex)
+                    {
+                        return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, letterSent);
+            }
+        }
+
+
+
+        private string WriteChangePasswordLetter(string email, string guid)
+        {
+            string smtpHost = "smtp.gmail.com";
+            int smtpPort = 587;
+            string smtpUserName = "btsemail1@gmail.com";
+            string smtpUserPass = "btsadmin";
+
+            SmtpClient client = new SmtpClient(smtpHost, smtpPort);
+            client.UseDefaultCredentials = false;
+            client.Credentials = new NetworkCredential(smtpUserName, smtpUserPass);
+            client.EnableSsl = true;
+
+            string msgFrom = smtpUserName;
+            string msgTo = email;
+            string msgSubject = "Password Notification";
+
+            string msgBody = "Please follow this link: http://localhost:24082/Main/SetNewPassword?request_id=" +
+                guid + " to change your password";
+
+            MailMessage message = new MailMessage(msgFrom, msgTo, msgSubject, msgBody);
+
+            message.IsBodyHtml = true;
+
+            try
+            {
+                client.Send(message);
+
+                return "OK";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
 
 
         [AllowAnonymous]
