@@ -1,0 +1,87 @@
+﻿@using Scheduler.Models.Auxiliary;
+
+@{
+    ViewBag.Title = "StartPage";
+}
+
+@foreach (var el in (List<StartPageBlockData>)ViewBag.BlocksData)
+{
+    @Html.Partial("StartViewBlock",
+    new ViewDataDictionary(){
+        new KeyValuePair<string, object>("title", el.Title),
+        new KeyValuePair<string, object>("description", el.Description),
+        new KeyValuePair<string, object>("colorName", el.ColorName),
+        new KeyValuePair<string, object>("nextBlock", el.NextBlock),
+        new KeyValuePair<string, object>("id", el.Id),
+        new KeyValuePair<string, object>("arrowImageSrc", el.ArrowImageSrc)
+    })
+}
+
+<div id="signInModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-6 col-sm-offset-3">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Login" id="usr">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" placeholder="Password" id="pwd">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="sign_in" class="btn btn-success" data-dismiss="modal">Sign In</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section scripts{
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $(".infoUrlBlock").mouseout(function () {
+                $(this).find(".infoUrl").fadeOut(500);
+            });
+
+            $(".infoUrlBlock").mouseover(function () {
+                $(this).find(".infoUrl").fadeIn(500);
+            });
+
+            $("#sign_in").click(function () {
+                $.ajax({
+                    method: "POST",
+                    url: "/token",
+                    contentType: "application/json",
+                    data: {
+                        username: $('#usr').val(),
+                        password: $('#pwd').val(),
+                        grant_type: 'password'
+                    },
+                    success: function (res) {
+                        document.cookie = "access_token=" + res.access_token;
+
+                        window.location.href = '@Url.Action("AccountPage", "Main")';
+                    },
+                    error: function (xhr, error, message) {
+                        window.location.href = '@Url.Action("StartPage", "Main")';
+                    }
+                });
+            });
+        });
+
+    </script>
+
+}
