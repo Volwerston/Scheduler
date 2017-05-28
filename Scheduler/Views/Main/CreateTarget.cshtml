@@ -1,0 +1,251 @@
+﻿
+@{
+    ViewBag.Title = "CreateTarget";
+    Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+}
+
+<style>
+    .main-col {
+        padding: 15px;
+        margin: 5px;
+        background-color: antiquewhite;
+        box-shadow: 2px 2px 1px 2px #888888;
+    }
+</style>
+
+<div class="row">
+    <div class="col main-col col-sm-12" style="min-height: 300px;">
+        <p style="text-align: center;">No targets found yet.</p>
+    </div>
+    <div class="col main-col col-sm-4">
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <input type="text" name="target_name" class="form-control" placeholder="What do you want to achieve" />
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <textarea class="form-control" name="target_tools" placeholder="How do you want to achieve this?"></textarea>
+                </div>
+            </div>
+            <label for="previous_targets" class="control-label">What do you need to achieve before this?</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <select multiple name="previous_targets" class="form-control"></select>
+                </div>
+            </div>
+            <label for="time_measure" class="control-label">How much time do you need?</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <input type="number" class="form-control" placeholder="Number of days" name="time_measure" />
+                </div>
+            </div>
+            <label for="working_days" class="control-label">On which days you will work?</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <select multiple name="working_days" class="form-control">
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="7">Sunday</option>
+                    </select>
+                </div>
+            </div>
+            <label for="priority" class="control-label">Priority</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <select name="priority" class="form-control">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <button type="button" id="add_target" class="btn btn-success col-md-10">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col main-col col-sm-7" id="target_container" style="padding: 15px;">
+        <p style="text-align: center">No targets found yet.</p>
+    </div>
+</div>
+
+@section scripts{
+
+    <script type="text/javascript">
+
+        var counter = 0;
+        var targets = [];
+        var isEdited = false;
+        var editedId = 0;
+
+        function isFormEmpty() {
+
+            if ($('input[name="target_name"]').val() != "") {
+                return false;
+            }
+
+            if ($('textarea[name="target_tools"]').val() != "") {
+                return false;
+            }
+
+            if ($('input[name="time_measure"]').val() != "") {
+                return false;
+            }
+
+            return true;
+        }
+
+        function seedForm(id) {
+            for(var i = 0; i < targets.length; ++i)
+            {
+                if(targets[i].id == id)
+                {
+                    var el = targets[i].elem;
+                    $('input[name="target_name"]').val(el.name);
+                    $('textarea[name="target_tools"]').val(el.tools);
+                    $('input[name="time_measure"]').val(el.numOfDays);
+                    $('select[name="previous_targets"]').val(el.prevTargets);
+                    $('select[name="working_days"]').val(el.workingDays);
+                    $('select[name="priority"]').val(el.priority);
+                    break;
+                }
+            }
+        }
+
+        function CreateTarget() {
+            var toReturn = {};
+
+            toReturn.name = $('input[name="target_name"]').val();
+            toReturn.tools = $('textarea[name="target_tools"]').val();
+            toReturn.numOfDays = $('input[name="time_measure"]').val();
+            toReturn.prevTargets = $('select[name="previous_targets"]').val();
+            toReturn.workingDays = $('select[name="working_days"]').val();
+            toReturn.priority = $('select[name="priority"]').val();
+
+            $('input[name="target_name"]').val("");
+            $('textarea[name="target_tools"]').val("");
+            $('input[name="time_measure"]').val("");
+            $('select[name="previous_targets"]').val("");
+            $('select[name="working_days"]').val("");
+
+            return toReturn;
+        }
+
+        function openTarget(id) {
+            if (!isFormEmpty()) {
+                if (confirm("Form is not empty. Delete unsaved changes?")) {
+                   seedForm(id);
+                }
+            }
+            else {
+                isEdited = true;
+                editedId = id;
+                seedForm(id);
+            }
+        }
+
+        $(document).ready(function () {
+
+            $("#add_target").click(function () {
+                var toAdd = CreateTarget();
+                if (!isEdited) {
+                    // generate target from form data
+                    ++counter;
+                    targets.push({ elem: toAdd, id: counter });
+
+                    // add target to select list
+
+                    var numOfOptions = $('select[name="previous_targets"]').find("option").length + 1;
+                    $('select[name="previous_targets"]').append('<option value="' + numOfOptions + '">' + toAdd.name + '</option>');
+
+                    //display target in the right-side column
+
+                    if ($("#target_container").find("div").length == 0) {
+                        $("#target_container").empty();
+                    }
+
+                    $("#target_container").append(
+                        '<div class="row"'
+                        + 'style="border: 1px solid grey; border-radius: 3px; margin: 10px; background-color: white;" id="target_' + counter + '">'
+                        + '<div class="col col-sm-11"><button id="target_ctrl_' + counter + '" class="close pull-right">&times;</button></div>'
+                        + '<div class="col col-sm-11" style="cursor: pointer" onclick="openTarget(' + targets.length + ')"><p>'
+                        + toAdd.name
+                        + '</p></div></div>'
+                        );
+
+                    $("#target_ctrl_" + counter).click(function () {
+                        var id = $(this).attr("id").split('_')[2];
+
+                        if (isEdited && editedId == id) {
+                            alert("This target is in editing mode");
+                        }
+                        else {
+                            for (var i = 0; i < targets.length; ++i) {
+                                if (targets[i].id == id) {
+                                    var ok = true;
+                                    for (var j = 0; j < targets.length; ++j) {
+                                        if (targets[j].elem.prevTargets != null) {
+                                            for (var k = 0; k < targets[j].elem.prevTargets.length; ++k) {
+                                                if (targets[j].elem.prevTargets[k] == id) {
+                                                    ok = false;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (!ok) break;
+                                    }
+
+                                    if (!ok) {
+                                        alert("Unable to remove target because other targets depend on it");
+                                    }
+                                    else {
+                                        $("#target_" + id).remove();
+                                        if ($("#target_container").children().length == 0)
+                                        {
+                                            $("#target_container").append('<p style="text-align: center">No targets found yet.</p>');
+                                        }
+
+                                        var elems = $('select[name="previous_targets"]').find("option");
+                                        
+                                        for(var j = 0; j < elems.length; ++j)
+                                            if ($(elems[j]).val() == targets[i].id) {
+                                                elems[j].remove();
+                                                break;
+                                            }
+                                        targets.splice(i, 1);
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                }
+                else {
+                    isEdited = false;
+                    
+                    for(var i = 0; i < targets.length; ++i)
+                    {
+                        if(targets[i].id == editedId)
+                        {
+                            targets[i].elem = toAdd;
+                        }
+                    }
+                }
+            });
+        });
+
+    </script>
+
+}

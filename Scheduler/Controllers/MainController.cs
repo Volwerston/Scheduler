@@ -181,5 +181,19 @@ namespace Scheduler.Controllers
 
             return RedirectToAction("SetNewPassword", "Main", request_id);
         }
+
+
+        [Authorize]
+        public ActionResult CreateTarget()
+        {
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        public ActionResult CreateTarget(FormCollection collection)
+        {
+            return View();
+        }
     }
 }

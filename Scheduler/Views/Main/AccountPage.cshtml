@@ -5,24 +5,32 @@
 }
 
 <style>
-    .col {
+    .block_col {
         border: 1px solid black;
         padding: 15px;
         margin: 5px;
         background-color: antiquewhite;
+        box-shadow: 5px 5px 2px #888888;
+    }
+
+    .col{
+        padding: 15px;
+        margin: 5px;
+        background-color: antiquewhite;
+        box-shadow: 2px 2px 1px 2px #888888;
     }
 </style>
 
 <div class="row">
-    <div class="col col-sm-3">
+    <div class="col col-sm-3 block_col">
         Photo
     </div>
-    <div class="col col-sm-8">
+    <div class="col col-sm-8 block_col">
         Personal data
     </div>
 </div>
 <div class="row">
-    <div class="col col-sm-5">
+    <div class="col col-sm-5 block_col">
         <div class="row">
             <div class="col">
                 Workflow
@@ -34,7 +42,7 @@
             </div>
         </div>
     </div>
-    <div class="col col-sm-6">
+    <div class="col col-sm-6 block_col">
         Personal info
     </div>
 </div>
