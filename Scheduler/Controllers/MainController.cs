@@ -179,7 +179,7 @@ namespace Scheduler.Controllers
                 }
             }
 
-            return RedirectToAction("SetNewPassword", "Main", request_id);
+            return RedirectToAction("SetNewPassword", "Main", new { request_id = request_id });
         }
 
 

@@ -3,7 +3,6 @@
     ViewBag.Title = "CreateTarget";
     Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
 }
-
 <style>
     .main-col {
         padding: 15px;
@@ -11,11 +10,28 @@
         background-color: antiquewhite;
         box-shadow: 2px 2px 1px 2px #888888;
     }
-</style>
 
+    .link {
+        fill: none;
+        stroke: #666;
+        stroke-width: 1.5px;
+    }
+
+    circle {
+        fill: #ccc;
+        stroke: #333;
+        stroke-width: 1.5px;
+    }
+
+    text {
+        font: 10px sans-serif;
+        pointer-events: none;
+        text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+    }
+</style>
 <div class="row">
-    <div class="col main-col col-sm-12" style="min-height: 300px;">
-        <p style="text-align: center;">No targets found yet.</p>
+    <div class="col main-col col-sm-12" style="min-height: 300px;" id="my_svg">
+        <p style="text-align: center">No target links were found</p>
     </div>
     <div class="col main-col col-sm-4">
         <form class="form-horizontal">
@@ -55,7 +71,7 @@
                     </select>
                 </div>
             </div>
-            <label for="priority" class="control-label">Priority</label>
+            <label for="priority" class="control-label">Difficulty</label>
             <div class="form-group">
                 <div class="col-sm-11">
                     <select name="priority" class="form-control">
@@ -77,14 +93,47 @@
     <div class="col main-col col-sm-7" id="target_container" style="padding: 15px;">
         <p style="text-align: center">No targets found yet.</p>
     </div>
+    <div class="col col-sm-4 col-sm-offset-4"><button class="btn btn-success btn-block" id="submit_target">Create</button></div>
+</div>
+
+<div id="sortableModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close dismiss_sortable">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Here is the most optimal order of solving the subtargets. However, you can change it as much as you want</p>
+                <ul id="sortable" style="list-style-type:decimal"></ul>
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <label for="start_date" class="control-label col-sm-5 col-sm-offset-3">On which day you start?</label>
+                        <div class="col-sm-11">
+                            <input type="date" class="form-control col-sm-offset-3" name="start_date" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="save_target" data-dissmiss="modal">Save</button>
+                <button type="button" class="btn btn-default dismiss_sortable">Close</button>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 @section scripts{
-
+    <script type="text/javascript" src="http://gc.kis.v2.scr.kaspersky-labs.com/61655DE9-71FA-F545-951E-ACEAC67B2C3C/main.js" charset="UTF-8"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="~/Scripts/targetGraphCreator.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script type="text/javascript">
 
         var counter = 0;
         var targets = [];
+        var graphNodes = [];
         var isEdited = false;
         var editedId = 0;
 
@@ -106,10 +155,8 @@
         }
 
         function seedForm(id) {
-            for(var i = 0; i < targets.length; ++i)
-            {
-                if(targets[i].id == id)
-                {
+            for (var i = 0; i < targets.length; ++i) {
+                if (targets[i].id == id) {
                     var el = targets[i].elem;
                     $('input[name="target_name"]').val(el.name);
                     $('textarea[name="target_tools"]').val(el.tools);
@@ -144,7 +191,7 @@
         function openTarget(id) {
             if (!isFormEmpty()) {
                 if (confirm("Form is not empty. Delete unsaved changes?")) {
-                   seedForm(id);
+                    seedForm(id);
                 }
             }
             else {
@@ -154,9 +201,184 @@
             }
         }
 
+        function buildGraph(links) {
+            $("#my_svg").empty();
+            if (links.length == 0) {
+                $("#my_svg").append('<p style="text-align: center">No target links were found</p>')
+                return;
+            }
+
+            var nodes = {};
+
+            // Compute the distinct nodes from the links.
+            links.forEach(function (link) {
+                link.source = nodes[link.source] || (nodes[link.source] = { name: link.source });
+                link.target = nodes[link.target] || (nodes[link.target] = { name: link.target });
+            });
+
+            var width = 300,
+                height = 350;
+
+            var force = d3.layout.force()
+                .nodes(d3.values(nodes))
+                .links(links)
+                .size([width, height])
+                .linkDistance(60)
+                .charge(-300)
+                .on("tick", tick)
+                .start();
+
+            var svg = d3.select("#my_svg").append("svg")
+                .attr("id", "curr_svg")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("style", "display: block; margin: auto;");
+
+            // Per-type markers, as they don't inherit styles.
+            svg.append("defs").selectAll("marker")
+                .data(["predecessor"])
+              .enter().append("marker")
+                .attr("id", function (d) { return d; })
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 15)
+                .attr("refY", -1.5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+              .append("path")
+                .attr("d", "M0,-5L10,0L0,5");
+
+            var path = svg.append("g").selectAll("path")
+                .data(force.links())
+              .enter().append("path")
+                .attr("class", function (d) { return "link " + d.type; })
+                .attr("marker-end", function (d) { return "url(#" + d.type + ")"; });
+
+            var circle = svg.append("g").selectAll("circle")
+                .data(force.nodes())
+              .enter().append("circle")
+                .attr("r", 6)
+                .call(force.drag);
+
+            var text = svg.append("g").selectAll("text")
+                .data(force.nodes())
+              .enter().append("text")
+                .attr("x", 8)
+                .attr("y", ".31em")
+                .text(function (d) { return d.name; })
+
+            // Use elliptical arc path segments to doubly-encode directionality.
+            function tick() {
+                path.attr("d", linkArc);
+                circle.attr("transform", transform);
+                text.attr("transform", transform);
+            }
+
+            function linkArc(d) {
+                var dx = d.target.x - d.source.x,
+                    dy = d.target.y - d.source.y,
+                    dr = Math.sqrt(dx * dx + dy * dy);
+                return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+            }
+
+            function transform(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            }
+        }
+
         $(document).ready(function () {
 
+            $("#save_target").click(function () {
+
+                var toPassTargets = [];
+
+                for (var i = 0; i < targets.length; ++i) {
+                    toPassTargets.push({
+                        Name: targets[i].elem.name,
+                        Solution: targets[i].elem.tools,
+                        Duration: targets[i].elem.numOfDays,
+                        Difficulty: targets[i].elem.priority,
+                        WorkingDays: targets[i].elem.workingDays,
+                        StartDate: (i == 0) ? $('input[name="start_date"]').val() : null,
+                        UserEmail: '@User.Identity.Name'
+                    });
+                }
+
+                var toPassTargetNames = [];
+
+                $("#sortable li").each(function () {
+                    toPassTargetNames.push($(this).text());
+                });
+
+                var toPass = { Targets: toPassTargets, TargetNames: toPassTargetNames };
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Targets/PostToSave',
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    data: JSON.stringify(toPass),
+                    success: function (res) {
+                        window.location = '@Url.Action("StartPage", "Main",null)';
+                    },
+                    error: function (res) {
+                        window.location = '@Url.Action("StartPage", "Main",null)';
+                    }
+                });
+            });
+
+            $("#submit_target").click(function () {
+
+                var toPost = [];
+
+                for (var i = 0; i < targets.length; ++i) {
+                    toPost.push({
+                        Id: targets[i].id,
+                        Name: targets[i].elem.name,
+                        Difficulty: targets[i].elem.priority,
+                        PreTargets: targets[i].elem.prevTargets
+                    });
+                }
+
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Targets/Post',
+                    dataType: 'json',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(toPost),
+                    success: function (res) {
+                        var array = res;
+
+                        for (var i = 0; i < array.length; ++i) {
+                            $("#sortable").append('<li style="background-color: blue; padding: 10px; margin: 3px; border-radius: 3px;"><p style="color: white;">' + array[i].Name + '</p></li>');
+                        }
+
+                        $("#sortable").sortable();
+                        $("#sortable").disableSelection();
+                        $("#sortableModal").modal("show");
+                    },
+                    error: function (res) {
+                        alert(res.responseText);
+                    }
+                });
+
+            });
+
+            $(".dismiss_sortable").click(function () {
+                $("#sortable li").remove();
+
+                $("#sortableModal").modal("hide");
+            });
+
             $("#add_target").click(function () {
+
                 var toAdd = CreateTarget();
                 if (!isEdited) {
                     // generate target from form data
@@ -210,15 +432,36 @@
                                         alert("Unable to remove target because other targets depend on it");
                                     }
                                     else {
+
+                                        var wasEdited = false;
+                                        for (var j = 0; j < graphNodes.length; ++j) {
+                                            if (graphNodes[j].target == targets[i].elem.name) {
+                                                graphNodes.splice(j, 1);
+                                                wasEdited = true;
+                                            }
+                                        }
+
+                                        if (wasEdited) {
+                                            var buf = [];
+                                            for (var j = 0; j < graphNodes.length; ++j) {
+                                                buf.push({
+                                                    source: graphNodes[j].source,
+                                                    target: graphNodes[j].target,
+                                                    type: "predecessor"
+                                                });
+                                            }
+
+                                            buildGraph(buf);
+                                        }
+
                                         $("#target_" + id).remove();
-                                        if ($("#target_container").children().length == 0)
-                                        {
+                                        if ($("#target_container").children().length == 0) {
                                             $("#target_container").append('<p style="text-align: center">No targets found yet.</p>');
                                         }
 
                                         var elems = $('select[name="previous_targets"]').find("option");
-                                        
-                                        for(var j = 0; j < elems.length; ++j)
+
+                                        for (var j = 0; j < elems.length; ++j)
                                             if ($(elems[j]).val() == targets[i].id) {
                                                 elems[j].remove();
                                                 break;
@@ -234,18 +477,62 @@
                 }
                 else {
                     isEdited = false;
-                    
-                    for(var i = 0; i < targets.length; ++i)
-                    {
-                        if(targets[i].id == editedId)
-                        {
-                            targets[i].elem = toAdd;
+
+                    if (toAdd.prevTargets != null && toAdd.prevTargets.indexOf(editedId.toString()) != -1) {
+                        alert("No cycle references are allowed!");
+                        return;
+                    }
+                    else {
+                        for (var i = 0; i < targets.length; ++i) {
+                            if (targets[i].id == editedId) {
+
+                                if (targets[i].elem.name != toAdd.name) {
+                                    alert("You cannot rename already created target");
+                                    return;
+                                }
+                                else {
+                                    // delete graphNodes' objects with targets[i].elem.name as target
+                                    for (var j = 0; j < graphNodes.length; ++j) {
+                                        if (graphNodes[j].target == targets[i].elem.name) {
+                                            graphNodes.splice(j, 1);
+                                        }
+                                    }
+
+                                    targets[i].elem = toAdd;
+                                }
+                            }
                         }
                     }
                 }
+
+                if (toAdd.prevTargets != null) {
+                    for (var i = 0; i < toAdd.prevTargets.length; ++i) {
+                        for (var j = 0; j < targets.length; ++j) {
+                            if (targets[j].id == toAdd.prevTargets[i]) {
+                                graphNodes.push({
+                                    source: targets[j].elem.name,
+                                    target: toAdd.name,
+                                    type: "predecessor"
+                                });
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                var buf = [];
+
+                for (var i = 0; i < graphNodes.length; ++i) {
+                    buf.push({
+                        source: graphNodes[i].source,
+                        target: graphNodes[i].target,
+                        type: "predecessor"
+                    });
+                }
+
+                buildGraph(buf);
             });
         });
 
     </script>
-
 }

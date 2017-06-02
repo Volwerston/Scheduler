@@ -21,6 +21,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.Net;
 using System.Data.SqlClient;
+using System.Web.Http.Results;
 
 namespace Scheduler.Controllers
 {
@@ -332,7 +333,7 @@ namespace Scheduler.Controllers
 
             using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
             {
-                string cmdString = "SELECT * FROM ChangePasswordLog WHERE RequestId=@id; DELETE FROM ChangePasswordLog WHERE RequestId=@id;";
+                string cmdString = "SELECT * FROM ChangePasswordLog WHERE RequestId=@id;";
 
                 SqlCommand cmd = new SqlCommand(cmdString, con);
 
@@ -357,18 +358,23 @@ namespace Scheduler.Controllers
 
                     string id = GetUserId(con, email);
 
-                    try
-                    {
-                        SetNullPassword(id);
+                    SetNullPassword(id);
 
-                        await SetPassword(new SetPasswordBindingModel { Id = id, NewPassword = data.Item2, ConfirmPassword = data.Item3 });
+                    IHttpActionResult res = await SetPassword(new SetPasswordBindingModel { Id = id, NewPassword = data.Item2, ConfirmPassword = data.Item3 });
+                    var contentResult = res as OkResult;
 
-                        return Request.CreateResponse(HttpStatusCode.OK, "OK");
-                    }
-                    catch
+                    if (contentResult == null)
                     {
-                        return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Internal server error");
+                        throw new Exception("An error has occured");
                     }
+
+                    cmdString = "DELETE FROM ChangePasswordLog WHERE RequestId = @id;";
+                    cmd = new SqlCommand(cmdString, con);
+
+                    cmd.Parameters.AddWithValue("@id", request_id);
+                    cmd.ExecuteNonQuery();
+
+                    return Request.CreateResponse(HttpStatusCode.OK, "OK");
                 }
                 catch
                 {
@@ -488,7 +494,7 @@ namespace Scheduler.Controllers
             {
                 using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
                 {
-                    string cmdString = "INSERT INTO ChangePasswordLog VALUES(GETDATE(), @RequestId, @mail);";
+                    string cmdString = "INSERT INTO ChangePasswordLog VALUES(@RequestId, @mail,GETDATE());";
 
                     SqlCommand cmd = new SqlCommand(cmdString, con);
 
