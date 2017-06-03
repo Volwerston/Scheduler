@@ -51,6 +51,10 @@ namespace Algorithms
             {
                 throw new Exception("The target graph has no root");
             }
+            else if(indexes.Count() > 1)
+            {
+                throw new Exception("The target graph has multiple roots");
+            }
 
             return nodeByIndex[indexes.First().Key];
         }

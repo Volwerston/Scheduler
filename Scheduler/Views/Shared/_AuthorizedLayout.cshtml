@@ -46,7 +46,6 @@
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
-
     <script type="text/javascript">
 
         function deleteCookie(name) {
@@ -64,7 +63,7 @@
                 $.ajax({
                     method: 'POST',
                     url: '/api/Account/Logout',
-                    headers:{
+                    headers: {
                         Authorization: 'Bearer ' + getCookie('access_token')
                     },
                     success: function (res) {
@@ -77,6 +76,21 @@
                 });
             });
         });
+
+        function displayMessage(aTitle, aText) {
+            if (aTitle == "Success") {
+                $.growl.notice({ title: aTitle, message: aText });
+            }
+            else if (aTitle == "Warning") {
+                $.growl.warning({ title: aTitle, message: aText });
+            }
+            else if (aTitle == "Error") {
+                $.growl.error({ title: aTitle, message: aText });
+            }
+            else {
+                $.growl({ title: aTitle, message: aText });
+            }
+        }
 
     </script>
 

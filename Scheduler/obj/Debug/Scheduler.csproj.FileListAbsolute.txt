@@ -180,3 +180,10 @@ C:\Users\User\Desktop\Scheduler\Scheduler\bin\System.Runtime.InteropServices.Run
 C:\Users\User\Desktop\Scheduler\Scheduler\bin\MongoDB.Bson.xml
 C:\Users\User\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.xml
 C:\Users\User\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.Core.xml
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Bson.dll
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.Core.dll
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.dll
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\System.Runtime.InteropServices.RuntimeInformation.dll
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Bson.xml
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.xml
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.Core.xml

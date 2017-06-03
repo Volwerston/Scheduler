@@ -28,10 +28,67 @@
         pointer-events: none;
         text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
     }
+
+    svg {
+        background-color: #FFF;
+        cursor: default;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        width: 500px;
+        height: 350px;
+    }
+
+        svg:not(.active):not(.ctrl) {
+            cursor: crosshair;
+        }
+
+    path.link {
+        fill: none;
+        stroke: #000;
+        stroke-width: 4px;
+        cursor: default;
+    }
+
+    svg:not(.active):not(.ctrl) path.link {
+        cursor: pointer;
+    }
+
+    path.link.selected {
+        stroke-dasharray: 10,2;
+    }
+
+    path.link.dragline {
+        pointer-events: none;
+    }
+
+    path.link.hidden {
+        stroke-width: 0;
+    }
+
+    circle.node {
+        stroke-width: 1.5px;
+        cursor: pointer;
+    }
+
+        circle.node.reflexive {
+            stroke: #000 !important;
+            stroke-width: 2.5px;
+        }
+
+    text {
+        font: 12px sans-serif;
+        pointer-events: none;
+    }
+
+        text.id {
+            text-anchor: middle;
+            font-weight: bold;
+        }
 </style>
 <div class="row">
     <div class="col main-col col-sm-12" style="min-height: 300px;" id="my_svg">
-        <p style="text-align: center">No target links were found</p>
     </div>
     <div class="col main-col col-sm-4">
         <form class="form-horizontal">
@@ -43,12 +100,6 @@
             <div class="form-group">
                 <div class="col-sm-11">
                     <textarea class="form-control" name="target_tools" placeholder="How do you want to achieve this?"></textarea>
-                </div>
-            </div>
-            <label for="previous_targets" class="control-label">What do you need to achieve before this?</label>
-            <div class="form-group">
-                <div class="col-sm-11">
-                    <select multiple name="previous_targets" class="form-control"></select>
                 </div>
             </div>
             <label for="time_measure" class="control-label">How much time do you need?</label>
@@ -85,7 +136,7 @@
             </div>
             <div class="form-group">
                 <div class="col-sm-11">
-                    <button type="button" id="add_target" class="btn btn-success col-md-10">Submit</button>
+                    <button type="button" id="add_target" class="btn btn-success">Add</button>
                 </div>
             </div>
         </form>
@@ -125,221 +176,22 @@
 </div>
 
 @section scripts{
-    <script type="text/javascript" src="http://gc.kis.v2.scr.kaspersky-labs.com/61655DE9-71FA-F545-951E-ACEAC67B2C3C/main.js" charset="UTF-8"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="~/Scripts/targetGraphCreator.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="~/Scripts/TargetGraph.js"></script>
     <script type="text/javascript">
-
-        var counter = 0;
-        var targets = [];
-        var graphNodes = [];
-        var isEdited = false;
-        var editedId = 0;
-
-        function isFormEmpty() {
-
-            if ($('input[name="target_name"]').val() != "") {
-                return false;
-            }
-
-            if ($('textarea[name="target_tools"]').val() != "") {
-                return false;
-            }
-
-            if ($('input[name="time_measure"]').val() != "") {
-                return false;
-            }
-
-            return true;
-        }
-
-        function seedForm(id) {
-            for (var i = 0; i < targets.length; ++i) {
-                if (targets[i].id == id) {
-                    var el = targets[i].elem;
-                    $('input[name="target_name"]').val(el.name);
-                    $('textarea[name="target_tools"]').val(el.tools);
-                    $('input[name="time_measure"]').val(el.numOfDays);
-                    $('select[name="previous_targets"]').val(el.prevTargets);
-                    $('select[name="working_days"]').val(el.workingDays);
-                    $('select[name="priority"]').val(el.priority);
-                    break;
-                }
-            }
-        }
-
-        function CreateTarget() {
-            var toReturn = {};
-
-            toReturn.name = $('input[name="target_name"]').val();
-            toReturn.tools = $('textarea[name="target_tools"]').val();
-            toReturn.numOfDays = $('input[name="time_measure"]').val();
-            toReturn.prevTargets = $('select[name="previous_targets"]').val();
-            toReturn.workingDays = $('select[name="working_days"]').val();
-            toReturn.priority = $('select[name="priority"]').val();
-
-            $('input[name="target_name"]').val("");
-            $('textarea[name="target_tools"]').val("");
-            $('input[name="time_measure"]').val("");
-            $('select[name="previous_targets"]').val("");
-            $('select[name="working_days"]').val("");
-
-            return toReturn;
-        }
-
-        function openTarget(id) {
-            if (!isFormEmpty()) {
-                if (confirm("Form is not empty. Delete unsaved changes?")) {
-                    seedForm(id);
-                }
-            }
-            else {
-                isEdited = true;
-                editedId = id;
-                seedForm(id);
-            }
-        }
-
-        function buildGraph(links) {
-            $("#my_svg").empty();
-            if (links.length == 0) {
-                $("#my_svg").append('<p style="text-align: center">No target links were found</p>')
-                return;
-            }
-
-            var nodes = {};
-
-            // Compute the distinct nodes from the links.
-            links.forEach(function (link) {
-                link.source = nodes[link.source] || (nodes[link.source] = { name: link.source });
-                link.target = nodes[link.target] || (nodes[link.target] = { name: link.target });
-            });
-
-            var width = 300,
-                height = 350;
-
-            var force = d3.layout.force()
-                .nodes(d3.values(nodes))
-                .links(links)
-                .size([width, height])
-                .linkDistance(60)
-                .charge(-300)
-                .on("tick", tick)
-                .start();
-
-            var svg = d3.select("#my_svg").append("svg")
-                .attr("id", "curr_svg")
-                .attr("width", width)
-                .attr("height", height)
-                .attr("style", "display: block; margin: auto;");
-
-            // Per-type markers, as they don't inherit styles.
-            svg.append("defs").selectAll("marker")
-                .data(["predecessor"])
-              .enter().append("marker")
-                .attr("id", function (d) { return d; })
-                .attr("viewBox", "0 -5 10 10")
-                .attr("refX", 15)
-                .attr("refY", -1.5)
-                .attr("markerWidth", 6)
-                .attr("markerHeight", 6)
-                .attr("orient", "auto")
-              .append("path")
-                .attr("d", "M0,-5L10,0L0,5");
-
-            var path = svg.append("g").selectAll("path")
-                .data(force.links())
-              .enter().append("path")
-                .attr("class", function (d) { return "link " + d.type; })
-                .attr("marker-end", function (d) { return "url(#" + d.type + ")"; });
-
-            var circle = svg.append("g").selectAll("circle")
-                .data(force.nodes())
-              .enter().append("circle")
-                .attr("r", 6)
-                .call(force.drag);
-
-            var text = svg.append("g").selectAll("text")
-                .data(force.nodes())
-              .enter().append("text")
-                .attr("x", 8)
-                .attr("y", ".31em")
-                .text(function (d) { return d.name; })
-
-            // Use elliptical arc path segments to doubly-encode directionality.
-            function tick() {
-                path.attr("d", linkArc);
-                circle.attr("transform", transform);
-                text.attr("transform", transform);
-            }
-
-            function linkArc(d) {
-                var dx = d.target.x - d.source.x,
-                    dy = d.target.y - d.source.y,
-                    dr = Math.sqrt(dx * dx + dy * dy);
-                return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
-            }
-
-            function transform(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            }
-        }
-
         $(document).ready(function () {
-
-            $("#save_target").click(function () {
-
-                var toPassTargets = [];
-
-                for (var i = 0; i < targets.length; ++i) {
-                    toPassTargets.push({
-                        Name: targets[i].elem.name,
-                        Solution: targets[i].elem.tools,
-                        Duration: targets[i].elem.numOfDays,
-                        Difficulty: targets[i].elem.priority,
-                        WorkingDays: targets[i].elem.workingDays,
-                        StartDate: (i == 0) ? $('input[name="start_date"]').val() : null,
-                        UserEmail: '@User.Identity.Name'
-                    });
-                }
-
-                var toPassTargetNames = [];
-
-                $("#sortable li").each(function () {
-                    toPassTargetNames.push($(this).text());
-                });
-
-                var toPass = { Targets: toPassTargets, TargetNames: toPassTargetNames };
-
-                $.ajax({
-                    method: 'POST',
-                    url: '/api/Targets/PostToSave',
-                    contentType: 'application/json; charset=utf-8',
-                    dataType: 'json',
-                    headers: {
-                        Authorization: 'Bearer ' + getCookie('access_token')
-                    },
-                    data: JSON.stringify(toPass),
-                    success: function (res) {
-                        window.location = '@Url.Action("StartPage", "Main",null)';
-                    },
-                    error: function (res) {
-                        window.location = '@Url.Action("StartPage", "Main",null)';
-                    }
-                });
-            });
 
             $("#submit_target").click(function () {
 
                 var toPost = [];
 
-                for (var i = 0; i < targets.length; ++i) {
+                for (var i = 0; i < nodes.length; ++i) {
                     toPost.push({
-                        Id: targets[i].id,
-                        Name: targets[i].elem.name,
-                        Difficulty: targets[i].elem.priority,
-                        PreTargets: targets[i].elem.prevTargets
+                        Id: nodes[i].id,
+                        Name: nodes[i].elem.name,
+                        Difficulty: nodes[i].elem.difficulty,
+                        PreTargets: nodes[i].elem.prevTargets
                     });
                 }
 
@@ -377,162 +229,49 @@
                 $("#sortableModal").modal("hide");
             });
 
-            $("#add_target").click(function () {
+            $("#save_target").click(function () {
 
-                var toAdd = CreateTarget();
-                if (!isEdited) {
-                    // generate target from form data
-                    ++counter;
-                    targets.push({ elem: toAdd, id: counter });
+                var toPassTargets = [];
+                var firstOneName = $("#sortable li").first().text();
 
-                    // add target to select list
-
-                    var numOfOptions = $('select[name="previous_targets"]').find("option").length + 1;
-                    $('select[name="previous_targets"]').append('<option value="' + numOfOptions + '">' + toAdd.name + '</option>');
-
-                    //display target in the right-side column
-
-                    if ($("#target_container").find("div").length == 0) {
-                        $("#target_container").empty();
-                    }
-
-                    $("#target_container").append(
-                        '<div class="row"'
-                        + 'style="border: 1px solid grey; border-radius: 3px; margin: 10px; background-color: white;" id="target_' + counter + '">'
-                        + '<div class="col col-sm-11"><button id="target_ctrl_' + counter + '" class="close pull-right">&times;</button></div>'
-                        + '<div class="col col-sm-11" style="cursor: pointer" onclick="openTarget(' + targets.length + ')"><p>'
-                        + toAdd.name
-                        + '</p></div></div>'
-                        );
-
-                    $("#target_ctrl_" + counter).click(function () {
-                        var id = $(this).attr("id").split('_')[2];
-
-                        if (isEdited && editedId == id) {
-                            alert("This target is in editing mode");
-                        }
-                        else {
-                            for (var i = 0; i < targets.length; ++i) {
-                                if (targets[i].id == id) {
-                                    var ok = true;
-                                    for (var j = 0; j < targets.length; ++j) {
-                                        if (targets[j].elem.prevTargets != null) {
-                                            for (var k = 0; k < targets[j].elem.prevTargets.length; ++k) {
-                                                if (targets[j].elem.prevTargets[k] == id) {
-                                                    ok = false;
-                                                    break;
-                                                }
-                                            }
-                                        }
-
-                                        if (!ok) break;
-                                    }
-
-                                    if (!ok) {
-                                        alert("Unable to remove target because other targets depend on it");
-                                    }
-                                    else {
-
-                                        var wasEdited = false;
-                                        for (var j = 0; j < graphNodes.length; ++j) {
-                                            if (graphNodes[j].target == targets[i].elem.name) {
-                                                graphNodes.splice(j, 1);
-                                                wasEdited = true;
-                                            }
-                                        }
-
-                                        if (wasEdited) {
-                                            var buf = [];
-                                            for (var j = 0; j < graphNodes.length; ++j) {
-                                                buf.push({
-                                                    source: graphNodes[j].source,
-                                                    target: graphNodes[j].target,
-                                                    type: "predecessor"
-                                                });
-                                            }
-
-                                            buildGraph(buf);
-                                        }
-
-                                        $("#target_" + id).remove();
-                                        if ($("#target_container").children().length == 0) {
-                                            $("#target_container").append('<p style="text-align: center">No targets found yet.</p>');
-                                        }
-
-                                        var elems = $('select[name="previous_targets"]').find("option");
-
-                                        for (var j = 0; j < elems.length; ++j)
-                                            if ($(elems[j]).val() == targets[i].id) {
-                                                elems[j].remove();
-                                                break;
-                                            }
-                                        targets.splice(i, 1);
-                                    }
-
-                                    break;
-                                }
-                            }
-                        }
-                    });
-                }
-                else {
-                    isEdited = false;
-
-                    if (toAdd.prevTargets != null && toAdd.prevTargets.indexOf(editedId.toString()) != -1) {
-                        alert("No cycle references are allowed!");
-                        return;
-                    }
-                    else {
-                        for (var i = 0; i < targets.length; ++i) {
-                            if (targets[i].id == editedId) {
-
-                                if (targets[i].elem.name != toAdd.name) {
-                                    alert("You cannot rename already created target");
-                                    return;
-                                }
-                                else {
-                                    // delete graphNodes' objects with targets[i].elem.name as target
-                                    for (var j = 0; j < graphNodes.length; ++j) {
-                                        if (graphNodes[j].target == targets[i].elem.name) {
-                                            graphNodes.splice(j, 1);
-                                        }
-                                    }
-
-                                    targets[i].elem = toAdd;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (toAdd.prevTargets != null) {
-                    for (var i = 0; i < toAdd.prevTargets.length; ++i) {
-                        for (var j = 0; j < targets.length; ++j) {
-                            if (targets[j].id == toAdd.prevTargets[i]) {
-                                graphNodes.push({
-                                    source: targets[j].elem.name,
-                                    target: toAdd.name,
-                                    type: "predecessor"
-                                });
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                var buf = [];
-
-                for (var i = 0; i < graphNodes.length; ++i) {
-                    buf.push({
-                        source: graphNodes[i].source,
-                        target: graphNodes[i].target,
-                        type: "predecessor"
+                for (var i = 0; i < nodes.length; ++i) {
+                    toPassTargets.push({
+                        Name: nodes[i].elem.name,
+                        Solution: nodes[i].elem.tools,
+                        Duration: nodes[i].elem.numOfDays,
+                        Difficulty: nodes[i].elem.difficulty,
+                        WorkingDays: nodes[i].elem.workingDays,
+                        StartDate: nodes[i].elem.name == firstOneName ? $('input[name="start_date"]').val() : null,
+                        UserEmail: '@User.Identity.Name'
                     });
                 }
 
-                buildGraph(buf);
+                var toPassTargetNames = [];
+
+                $("#sortable li").each(function () {
+                    toPassTargetNames.push($(this).text());
+                });
+
+                var toPass = { Targets: toPassTargets, TargetNames: toPassTargetNames };
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Targets/PostToSave',
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    data: JSON.stringify(toPass),
+                    success: function (res) {
+                        window.location = '@Url.Action("StartPage", "Main",null)';
+                    },
+                    error: function (res) {
+                        window.location = '@Url.Action("StartPage", "Main",null)';
+                    }
+                });
             });
-        });
 
+        });
     </script>
 }

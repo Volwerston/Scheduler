@@ -494,7 +494,7 @@ namespace Scheduler.Controllers
             {
                 using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
                 {
-                    string cmdString = "INSERT INTO ChangePasswordLog VALUES(@RequestId, @mail,GETDATE());";
+                    string cmdString = "INSERT INTO ChangePasswordLog VALUES(GETDATE(),@RequestId, @mail);";
 
                     SqlCommand cmd = new SqlCommand(cmdString, con);
 
