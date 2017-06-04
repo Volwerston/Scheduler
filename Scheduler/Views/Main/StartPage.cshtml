@@ -2,6 +2,7 @@
 
 @{
     ViewBag.Title = "StartPage";
+    Layout = "~/Views/Shared/_LandingPageLayout.cshtml";
 }
 
 @foreach (var el in (List<StartPageBlockData>)ViewBag.BlocksData)
@@ -40,8 +41,8 @@
             </div>
             <div class="modal-footer">
                 <div class="row">
-                    <button type="button" id="sign_in" class="btn btn-success col col-md-2" data-dismiss="modal">Sign In</button>
-                    <button type="button" id="forgot_password" class="btn btn-success col col-md-4" data-dismiss="modal">Forgot password</button>
+                    <button type="button" id="sign_in" class="btn custom-btn-success col col-md-2" data-dismiss="modal">Sign In</button>
+                    <button type="button" id="forgot_password" class="btn custom-btn-success col col-md-4" data-dismiss="modal">Forgot password</button>
                     <button type="button" class="btn btn-default col col-md-2" data-dismiss="modal">Close</button>
                 </div>
             </div>

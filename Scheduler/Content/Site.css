@@ -18,10 +18,21 @@ textarea {
 
 .info_block {
     display: table;
-    margin: auto; 
-    background-color: white; 
-    border: 1px solid black; 
-    padding: 10px; 
+    margin: auto;
+    background-color: antiquewhite;
+    padding: 10px;
+    border: none;
     margin-top: 10px;
     box-shadow: 10px 10px 5px #888888;
 }
+
+.custom-btn-success {
+    background-color: #57BC90;
+    border: none;
+    color: white;
+}
+
+    .custom-btn-success:hover {
+        color: white;
+        background-color: #57CD90;
+    }

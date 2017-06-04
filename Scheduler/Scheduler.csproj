@@ -345,6 +345,7 @@
     <Content Include="Views\Main\SetNewPassword.cshtml" />
     <Content Include="Views\Main\ChangePassword.cshtml" />
     <Content Include="Views\Main\CreateTarget.cshtml" />
+    <Content Include="Views\Shared\_LandingPageLayout.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
