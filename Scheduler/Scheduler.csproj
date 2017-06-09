@@ -265,6 +265,7 @@
     <Compile Include="Models\StartPageBlockData.cs" />
     <Compile Include="Models\Target.cs" />
     <Compile Include="Models\TargetNode.cs" />
+    <Compile Include="Models\TargetSearchOptions.cs" />
     <Compile Include="Models\WorkSpan.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
@@ -346,6 +347,7 @@
     <Content Include="Views\Main\ChangePassword.cshtml" />
     <Content Include="Views\Main\CreateTarget.cshtml" />
     <Content Include="Views\Shared\_LandingPageLayout.cshtml" />
+    <Content Include="Views\Main\SearchForTargets.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

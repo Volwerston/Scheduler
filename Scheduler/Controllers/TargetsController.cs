@@ -45,6 +45,12 @@ namespace Scheduler.Controllers
             }
         }
 
+        [Route("Search")]
+        public IHttpActionResult Post([FromBody]TargetSearchOptions options)
+        {
+            return Ok("Successful result");
+        }
+
         [Route("PostToSave")]
         [HttpPost]
         public IHttpActionResult Post([FromBody]TargetsToSave toSave)
