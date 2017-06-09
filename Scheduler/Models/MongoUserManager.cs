@@ -10,7 +10,7 @@ namespace Scheduler.Models
 {
     public class MongoUserManager : UserManager<ApplicationUser>
     {
-        public MongoUserManager(IUserStore<ApplicationUC:\Users\Юра\Desktop\Scheduler\Scheduler\Models\MongoUserManager.csser> store) : base(store)
+        public MongoUserManager(IUserStore<ApplicationUser> store) : base(store)
         {
         }
 

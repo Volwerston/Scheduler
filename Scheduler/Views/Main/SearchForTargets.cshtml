@@ -35,7 +35,9 @@
             </form>
         </div>
     </div>
-    <div class="col-sm-12 info-block" id="targets_container">
+</div>
+<div class="row" style="margin-top: 15px;">
+    <div class="col-sm-11" id="targets_container">
     </div>
 </div>
 
@@ -49,8 +51,7 @@
 
         var lastObjId = '@ViewData["object_id"]';
 
-        function sendRequest(obj)
-        {
+        function sendRequest(obj) {
 
             $.ajax({
                 method: 'POST',
@@ -62,7 +63,9 @@
                 contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(obj),
                 success: function (res) {
-                    displayMessage("Success", JSON.stringify(res));
+                    for (var i = 0; i < res.length; ++i) {
+                        $("#targets_container").append('<div style="min-height: 150px; width: 250px; margin: 10px; border-radius: 3px; background-color: white; display: inline-block; float: left;">' + res[i].Name + '</div>');
+                    }
                 },
                 error: function (res) {
                     displayMessage("Error", JSON.stringify(res));

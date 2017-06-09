@@ -23,11 +23,12 @@ namespace Scheduler.Controllers
 
         [Route("Post")]
         [HttpPost]
-        public IHttpActionResult Post([FromBody]List<Target> targets){
+        public IHttpActionResult Post([FromBody]List<Target> targets)
+        {
             try
             {
                 int[,] adj = Algorithms.Algorithms.GetAdjacencyMatrix(targets);
-                if(Algorithms.Algorithms.ContainsCycle(adj, new List<int>(),new List<List<int>>(),0))
+                if (Algorithms.Algorithms.ContainsCycle(adj, new List<int>(), new List<List<int>>(), 0))
                 {
                     throw new Exception("Target graph must not contain cycles");
                 }
@@ -35,11 +36,12 @@ namespace Scheduler.Controllers
                 TargetNode root = Algorithms.Algorithms.BuildTargetTree(targets);
                 List<TargetNode> nodes = Algorithms.Algorithms.TopologicalSort(root);
 
-                return Ok(nodes.Select(x => new {
+                return Ok(nodes.Select(x => new
+                {
                     Name = x.Title
                 }));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return InternalServerError(e);
             }
@@ -48,7 +50,47 @@ namespace Scheduler.Controllers
         [Route("Search")]
         public IHttpActionResult Post([FromBody]TargetSearchOptions options)
         {
-            return Ok("Successful result");
+            try
+            {
+                MongoClient client = new MongoClient();
+                var db = client.GetDatabase("scheduler");
+                var collection = db.GetCollection<DbTarget>("targets");
+
+                IQueryable<DbTarget> query = null;
+
+                if (String.IsNullOrEmpty(options.Title))
+                {
+                    query = collection.AsQueryable().Where(
+                    x => x.UserEmail == options.UserName
+                    && x.Id > options.LastObjectId
+                    ).Take(5);
+                }
+                else
+                {
+                    query = collection.AsQueryable().Where(
+                        x => x.Name.ToLower().Contains(options.Title.ToLower())
+                        && x.UserEmail == options.UserName
+                        && x.Id > options.LastObjectId
+                        ).Take(5);
+                }
+
+                List<DbTarget> toReturn = null;
+
+                if(options.OrderBy == "date")
+                {
+                    toReturn = query.OrderByDescending(x => x.StartDate).ToList();
+                }
+                else
+                {
+                    toReturn = query.OrderByDescending(x => x.Difficulty).ToList();
+                }
+
+                return Ok(toReturn);
+            }
+            catch (Exception e)
+            {
+                return InternalServerError(e);
+            }
         }
 
         [Route("PostToSave")]
@@ -84,7 +126,7 @@ namespace Scheduler.Controllers
 
                 return Ok();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return InternalServerError(e);
             }
