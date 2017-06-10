@@ -1,0 +1,38 @@
+﻿@using Scheduler.Models;
+@{
+    Layout = null;
+}
+
+@foreach (var el in (List<DbTarget>)ViewData["elements"])
+{
+    <a href="#">
+        <div class="col-md-3 info_block" style="min-height: 250px;cursor: pointer; float: left; margin: 15px;">
+            <h3 style="word-break: break-all; color: black; text-align: center;font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">@el.Name</h3>
+            <p style="word-break: break-all; color: black; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center;">@el.Solution</p>
+            <br />
+            <p style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; font-weight: bold; color: black;">Started on: @el.StartDate</p>
+            <p style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; font-weight: bold; color: black;">
+                Difficulty:
+                @switch (el.Difficulty.ToString())
+                {
+                    case "1":
+                    case "2":
+                        <text><span style="color:  green">Easy</span></text>
+                        break;
+                    case "3":
+                    case "4":
+                        <text><span style="color: orange">Medium</span></text>
+                        break;
+                    case "5":
+                        <text><span style="color: red">Hard</span></text>
+                        break;
+                }
+            </p>
+        </div>
+    </a>
+}
+
+@if (((List<DbTarget>)ViewData["elements"]).Count() > 0)
+{
+    <input type="hidden" class="last_object_id" value="@(((List<DbTarget>)ViewData["elements"]).Last().Id)" />
+}

@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Formatting;
+using System.Net.Http.Headers;
 using System.Web;
 using System.Web.Mvc;
 using System.Xml.Serialization;
@@ -132,6 +134,31 @@ namespace Scheduler.Controllers
         public ActionResult CreateTarget(FormCollection collection)
         {
             return View();
+        }
+
+        [Authorize]
+        public ActionResult FindTargets(TargetSearchOptions options)
+        {
+            List<DbTarget> toReturn = new List<DbTarget>();
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/sjon"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.PostAsJsonAsync("/api/Targets/Search", options).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    toReturn = msg.Content.ReadAsAsync<List<DbTarget>>().Result;
+                }
+            }
+
+            ViewData["elements"] = toReturn;
+
+            return PartialView("_SearchTarget");
         }
 
         [Authorize]

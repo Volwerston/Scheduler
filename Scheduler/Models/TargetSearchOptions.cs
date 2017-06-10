@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +10,9 @@ namespace Scheduler.Models
 {
     public class TargetSearchOptions
     {
-        public ObjectId LastObjectId { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string LastObjectId { get; set; }
         public string Title { get; set; }
         public string OrderBy { get; set; }
         public List<string> Tags { get; set; }

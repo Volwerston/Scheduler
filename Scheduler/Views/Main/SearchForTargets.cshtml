@@ -49,40 +49,67 @@
 
     <script type="text/javascript">
 
-        var lastObjId = '@ViewData["object_id"]';
+        var lastTargetId = '@ViewData["object_id"]';
 
         function sendRequest(obj) {
 
             $.ajax({
                 method: 'POST',
-                url: '/api/Targets/Search',
+                url: '/Main/FindTargets',
                 dataType: "json",
+                async: false,
                 headers: {
                     Authorization: 'Bearer ' + getCookie('access_token')
                 },
                 contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(obj),
                 success: function (res) {
-                    for (var i = 0; i < res.length; ++i) {
-                        $("#targets_container").append('<div style="min-height: 150px; width: 250px; margin: 10px; border-radius: 3px; background-color: white; display: inline-block; float: left;">' + res[i].Name + '</div>');
+                    $("#targets_container").append(res.responseText);
+
+                    if ($("#targets_container").children().length == 0) {
+                        $("#targets_container").append('<p style="text-align: center">No targets were found</p>');
                     }
                 },
                 error: function (res) {
-                    displayMessage("Error", JSON.stringify(res));
+                    $("#targets_container").append(res.responseText);
+
+                    if ($("#targets_container").children().length == 0) {
+                        $("#targets_container").append('<p style="text-align: center">No targets were found</p>');
+                    }
                 }
             });
         }
+
+        $(document).scroll(function () {
+            if ($(document).height() - ($(window).height() + $(window).scrollTop()) < 50) {
+
+                lastTargetId = $(".last_object_id").last().val();
+
+                var obj = {
+                    Title: $('input[name="title"]').val(),
+                    Tags: $("#tags").tagsinput('items'),
+                    LastObjectId: lastTargetId,
+                    UserName: '@User.Identity.Name',
+                    OrderBy: $('select[name="sort_by"]').val()
+                }
+
+                sendRequest(obj);
+            }
+        });
 
         $(document).ready(function () {
             var obj = {
                 Title: $('input[name="title"]').val(),
                 Tags: $("#tags").tagsinput('items'),
-                LastObjectId: lastObjId,
+                LastObjectId: lastTargetId,
                 UserName: '@User.Identity.Name',
                 OrderBy: $('select[name="sort_by"]').val()
             }
 
             sendRequest(obj);
+            if ($("#targets_container").children().length == 0) {
+                $("#targets_container").append('<p style="text-align: center">No targets were found</p>');
+            }
 
             $("#new_search").click(function () {
                 lastObjId = '@ViewData["object_id"]';
@@ -92,7 +119,7 @@
                 var obj = {
                     Title: $('input[name="title"]').val(),
                     Tags: $("#tags").tagsinput('items'),
-                    LastObjectId: lastObjId,
+                    LastObjectId: lastTargetId,
                     UserName: '@User.Identity.Name',
                     OrderBy: $('select[name="sort_by"]').val()
                 }

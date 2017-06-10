@@ -1,4 +1,5 @@
 ﻿using Algorithms;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Scheduler.Models;
 using System;
@@ -56,36 +57,59 @@ namespace Scheduler.Controllers
                 var db = client.GetDatabase("scheduler");
                 var collection = db.GetCollection<DbTarget>("targets");
 
-                IQueryable<DbTarget> query = null;
+                IEnumerable<DbTarget> query = null;
 
                 if (String.IsNullOrEmpty(options.Title))
                 {
-                    query = collection.AsQueryable().Where(
+                    query = collection.AsQueryable().ToList()
+                        .Where(
                     x => x.UserEmail == options.UserName
-                    && x.Id > options.LastObjectId
-                    ).Take(5);
+                    && String.Compare(x.Id, options.LastObjectId, true) > 0
+                    ).Take(10);
+
                 }
                 else
                 {
-                    query = collection.AsQueryable().Where(
+                    query = collection.AsQueryable().ToList().Where(
                         x => x.Name.ToLower().Contains(options.Title.ToLower())
                         && x.UserEmail == options.UserName
-                        && x.Id > options.LastObjectId
-                        ).Take(5);
+                        && String.Compare(x.Id,options.LastObjectId,true) > 0
+                        ).Take(10);
                 }
 
-                List<DbTarget> toReturn = null;
-
-                if(options.OrderBy == "date")
+                if (options.OrderBy == "date")
                 {
-                    toReturn = query.OrderByDescending(x => x.StartDate).ToList();
+                    var toReturn = query
+                        .Select(x => new
+                        {
+                            Name = x.Name,
+                            Difficulty = x.Difficulty,
+                            StartDate = x.StartDate,
+                            Solution = x.Solution,
+                            Id = x.Id
+                        })
+                        .OrderByDescending(x => x.StartDate)
+                        .ToList();
+
+                    return Ok(toReturn);
                 }
                 else
                 {
-                    toReturn = query.OrderByDescending(x => x.Difficulty).ToList();
+                    var toReturn = query
+                        .Select(x => new
+                        {
+                            Name = x.Name,
+                            Difficulty = x.Difficulty,
+                            StartDate = x.StartDate,
+                            Solution = x.Solution,
+                            Id = x.Id
+                        })
+                        .OrderByDescending(y => y.Difficulty)
+                        .ToList();
+
+                    return Ok(toReturn);
                 }
 
-                return Ok(toReturn);
             }
             catch (Exception e)
             {

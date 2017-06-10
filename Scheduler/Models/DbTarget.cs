@@ -1,5 +1,6 @@
 ﻿using Algorithms;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,9 @@ namespace Scheduler.Models
 {
     public class DbTarget
     {
-        public ObjectId Id { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
         public string Name { get; set; }
         public int Duration { get; set; }
         public int Elapsed { get; set; }
