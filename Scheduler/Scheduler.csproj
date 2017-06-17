@@ -349,6 +349,7 @@
     <Content Include="Views\Shared\_LandingPageLayout.cshtml" />
     <Content Include="Views\Main\SearchForTargets.cshtml" />
     <Content Include="Views\Shared\_SearchTarget.cshtml" />
+    <Content Include="Views\Main\TargetPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

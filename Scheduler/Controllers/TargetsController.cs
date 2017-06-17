@@ -22,6 +22,25 @@ namespace Scheduler.Controllers
     public class TargetsController : ApiController
     {
 
+        public IHttpActionResult Get([FromUri]string id)
+        {
+            try
+            {
+                MongoClient client = new MongoClient();
+                var db = client.GetDatabase("scheduler");
+                var collection = db.GetCollection<DbTarget>("targets");
+
+
+                DbTarget toReturn = collection.Find(Builders<DbTarget>.Filter.Where(x => x.Id == id && x.UserEmail == User.Identity.Name)).FirstOrDefault();
+
+                return Ok(toReturn);
+            }
+            catch(Exception e)
+            {
+                return InternalServerError(e);
+            }
+        }
+
         [Route("Post")]
         [HttpPost]
         public IHttpActionResult Post([FromBody]List<Target> targets)
@@ -137,9 +156,11 @@ namespace Scheduler.Controllers
                     }
                 }
 
+                save[0].WeekendsRemained = save[0].Difficulty;
                 for (int i = 1; i < save.Count(); ++i)
                 {
                     save[i - 1].NextTarget = save[i];
+                    save[i].WeekendsRemained = save[i].Difficulty;
                 }
 
                 MongoClient client = new MongoClient();

@@ -162,6 +162,37 @@ namespace Scheduler.Controllers
         }
 
         [Authorize]
+        public ActionResult TargetPage(string id)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.GetAsync("/api/Targets/Get?id=" + id).Result;
+
+                List<DbTarget> targets = new List<DbTarget>();
+                DbTarget currTarget = msg.Content.ReadAsAsync<DbTarget>().Result;
+                while(currTarget != null)
+                {
+                    targets.Add(currTarget);
+                    currTarget = currTarget.NextTarget;
+                }
+
+                for(int i = 0; i < targets.Count(); ++i)
+                {
+                    targets[i].NextTarget = null;
+                }
+
+                ViewData["targets"] = targets;
+            }
+
+            return View();
+        }
+
+        [Authorize]
         public ActionResult SearchForTargets()
         {
             ViewData["object_id"] = new ObjectId();

@@ -5,7 +5,7 @@
 
 @foreach (var el in (List<DbTarget>)ViewData["elements"])
 {
-    <a href="#">
+    <a href='@Url.Action("TargetPage", "Main", new { id = el.Id })'>
         <div class="col-md-3 info_block" style="min-height: 250px;cursor: pointer; float: left; margin: 15px;">
             <h3 style="word-break: break-all; color: black; text-align: center;font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">@el.Name</h3>
             <p style="word-break: break-all; color: black; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center;">@el.Solution</p>
