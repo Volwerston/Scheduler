@@ -169,7 +169,7 @@ namespace Scheduler.Controllers
 
                 collection.InsertOne(save[0]);
 
-                return Ok();
+                return Ok("Success");
             }
             catch (Exception e)
             {

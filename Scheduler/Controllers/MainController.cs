@@ -187,6 +187,7 @@ namespace Scheduler.Controllers
                 }
 
                 ViewData["targets"] = targets;
+                ViewData["id"] = id;
             }
 
             return View();

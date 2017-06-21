@@ -26,6 +26,26 @@
     efficiency = (activeDays / (double)elapsedDays) * 100;
 }
 
+<style>
+    .leftside_panel {
+        position: fixed;
+        right: 0;
+        top: 200px;
+        background-color: darkseagreen;
+        z-index: 1000;
+        padding: 10px;
+        cursor: pointer;
+        transform: rotate(270deg) translate(-50%, 50%);
+        -webkit-transform: rotate(270deg) translate(-50%, 50%);
+        -o-transform: rotate(270deg) translate(-50%, 50%);
+        -moz-transform: rotate(270deg) translate(-50%, 50%);
+        -ms-transform: rotate(270deg) translate(-50%, 50%);
+    }
+</style>
+
+<div class="leftside_panel" data-toggle="modal" data-target="#ideaModal">
+    <h4 style="font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif; color: wheat">ADD IDEA</h4>
+</div>
 
 <div class="row">
     <div class="col-sm-6 col-xs-12 info_block col-sm-push-3">
@@ -86,12 +106,65 @@
         </div>
     </div>
 </div>
+<div class="row">
+    <h3 style="font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color: wheat; text-align: center;">Ideas</h3>
+</div>
+<div class="row" id="ideas_container" style="margin-top: 15px; min-height: 350px;">
+</div>
+<div class="row" id="pager_container">
+    <ul class="pager">
+        <li><button type="button" class="btn btn-default" id="prev_chunk">Previous</button></li>
+        <li><button type="button" class="btn btn-default" id="next_chunk">Next</button></li>
+    </ul>
+</div>
 
-<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
-<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200' rel='stylesheet' type='text/css'>
+<div id="ideaModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Add New Idea For This Target</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <textarea class="form-control" rows="10" name="rtfEditor"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn custom-btn-success" id="save_idea">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="removeIdeaModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add New Idea For This Target</h4>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center">Are you sure you want to remove the idea?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn custom-btn-success" id="remove_idea">Yes</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section scripts{
-
+    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200' rel='stylesheet' type='text/css'>
+    <script src="//cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
     <script type="text/javascript">
 
         function makeData() {
@@ -126,17 +199,17 @@
         function pathName(path) { return path.data; }
 
         function render(g, svg, percent) {
-            g.datum(percent).selectAll("path").data(paths).transition().duration(1000).attrTween("d", arcTween);
+            g.datum(percent).selectAll("path").data(paths).transition().duration(1000);//.attrTween("d", arcTween);
             svg.datum(percent).selectAll("text").data(paths).text(function (d) { return d.value + '%'; });
         }
 
-        function arcTween(a) {
-            var i = d3.interpolate(this._current, a);
-            this._current = i(0);
-            return function (t) {
-                return arc(i(t));
-            };
-        }
+        //function arcTween(a) {
+        //    var i = d3.interpolate(this._current, a);
+        //    this._current = i(0);
+        //    return function (t) {
+        //        return arc(i(t));
+        //    };
+        //}
 
         function colTween(final) {
             var interpTo = d3.interpolateRgb(this._color, color(final.value / 100));
@@ -205,8 +278,7 @@
         targetsStr = targetsStr.replace(/&quot;/g, "\"");
         var targets = JSON.parse(targetsStr);
 
-        function extractSubtargetData(id)
-        {
+        function extractSubtargetData(id) {
             var obj = targets[id];
 
             $("#subtarget_efficiency").empty();
@@ -219,7 +291,7 @@
             $("#subtarget_stats")
             .append('<p style="font-family:sans-serif; font-weight: bold; color: black; text-align: center;">Name: ' + obj.Name + '</p>'
                     + '<p style="font-family:sans-serif; font-weight: bold; color: black; text-align: center;">Started on: ' + obj.StartDate + '</p>'
-                    + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Days elapsed: ' +  obj.Elapsed + '</p>'
+                    + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Days elapsed: ' + obj.Elapsed + '</p>'
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Active days: ' + obj.ActiveDays + '</p>');
 
             var currPerformance = parseFloat(obj.ActiveDays / obj.WorkingDays);
@@ -227,19 +299,190 @@
 
             buildArc(null, [currPerformance], 150, false, "subtarget_performance", 30);
             buildArc(null, [currEfficiency], 150, false, "subtarget_efficiency", 30);
+        }
 
+        var ideaToRemoveId = null;
 
+        function removeIdea(id) {
+            ideaToRemoveId = id;
+            $("#removeIdeaModal").modal("show");
+        }
+
+        function loadIdeas(chunkNumber, entitiesNum) {
+            $("#ideas_container").empty();
+
+            var toPass = {
+                TargetId: '@ViewData["id"].ToString()',
+                ChunkNumber: chunkNumber,
+                EntitiesNum: entitiesNum
+            };
+
+            $.ajax({
+                method: 'POST',
+                url: '/api/Idea/GetChunk',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify(toPass),
+                success: function (res) {
+
+                    var currIdeas = $("#ideas_container div");
+                    if (currIdeas.length > res.length) {
+                        for (var i = 0; i < res.length; ++i) {
+                            currentIdeas[i].val(res[i].Text);
+                        }
+                        for (var j = res.length; j < currIdeas.length; ++j) {
+                            currentIdeas[j].remove();
+                        }
+                    }
+                    else if (currIdeas.length == res.length) {
+                        for (var i = 0; i < res.length; ++i) {
+                            currentIdeas[i].val(res[i].Text);
+                        }
+                    }
+                    else {
+                        for (var i = 0; i < currIdeas.length; ++i) {
+                            currIdeas[i].val(res[i].Text);
+                        }
+
+                        for (var j = currIdeas.length; j < res.length; ++j) {
+                            $("#ideas_container").append('<div class="col-sm-5 col-xs-12 info_block" style="margin: 10px;height: 300px; overflow-x: hidden; overflow-y: scroll; word-break: break-all;"><span class="glyphicon glyphicon-remove pull-right" style="cursor: pointer" onclick="removeIdea(\'' + res[j].Id + '\')"></span>' + res[j].Text + '</div>');
+                        }
+                    }
+
+                    if ($("#ideas_container").children().length == 0) {
+                        $("#ideas_container").append('<p style="text-align: center">No ideas were found.</p>');
+                    }
+                },
+                error: function (res) {
+                    alert("Error!");
+                }
+            });
+        }
+
+        var entitiesNumber = 10;
+        var chunksCount = 0;
+        var currentChunk = 0;
+
+        function customizePager() {
+            var prevChunk = $("#prev_chunk");
+            var nextChunk = $("#next_chunk");
+
+            if (prevChunk.is(":hidden")) {
+                if (currentChunk != 1) {
+                    prevChunk.show();
+                }
+            }
+            else {
+                if (currentChunk == 1) {
+                    prevChunk.hide();
+                }
+            }
+
+            if (nextChunk.is(":hidden")) {
+                if (currentChunk < chunksCount) {
+                    nextChunk.show();
+                }
+            }
+            else {
+                if (currentChunk == chunksCount || chunksCount == 0) {
+                    nextChunk.hide();
+                }
+            }
+        }
+
+        function buildPager() {
+            $.ajax({
+                method: 'GET',
+                url: '/api/Idea/Count?id=' + '@ViewData["id"].ToString()',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    chunksCount = Math.floor(res / entitiesNumber) + (res % entitiesNumber != 0 ? 1 : 0);
+
+                    currentChunk = 1;
+                    loadIdeas(currentChunk, entitiesNumber);
+                    customizePager();
+                },
+                error: function (res) {
+                    alert("Error!");
+                }
+            });
         }
 
         $(document).ready(function () {
-
             buildArc("all_performance", [@performance], 200, true, null, 50);
             buildArc("all_efficiency", [@efficiency], 200, true, null, 50);
             extractSubtargetData(0);
+            CKEDITOR.replace('rtfEditor');
+            CKEDITOR.config.language = 'en-US';
+
+            buildPager();
 
             $('[id^="target"]').click(function () {
                 var id = $(this).attr('id').split('_')[1];
                 extractSubtargetData(id);
+            });
+
+            $("#next_chunk").click(function () {
+                if (currentChunk < chunksCount) {
+                    ++currentChunk;
+                    loadIdeas(currentChunk, entitiesNumber);
+                    customizePager();
+                }
+            });
+
+            $("#prev_chunk").click(function () {
+                if (currentChunk > 1) {
+                    --currentChunk;
+                    loadIdeas(currentChunk, entitiesNumber);
+                    customizePager();
+                }
+            });
+
+            $("#remove_idea").click(function () {
+
+                $.ajax({
+                    method: 'DELETE',
+                    url: '/api/Idea/Delete?id=' + ideaToRemoveId,
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    success: function (res) {
+                        window.location = '@Url.Action("TargetPage", "Main", new { id = ViewData["id"].ToString()})';
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+
+            });
+
+            $("#save_idea").click(function () {
+
+                if (CKEDITOR.instances['rtfEditor'].getData().trim() != "") {
+                    var toPass = {
+                        TargetId: '@ViewData["id"].ToString()',
+                        Text: CKEDITOR.instances['rtfEditor'].getData()
+                    };
+
+                    $.ajax({
+                        method: 'POST',
+                        url: '/api/Idea/Add',
+                        contentType: 'application/json; chrset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify(toPass),
+                        success: function (res) {
+                            window.location = '@Url.Action("TargetPage", "Main", new { id = ViewData["id"].ToString() })';
+                        },
+                        error: function (res) {
+                            displayMessage("Error", "Internal server error");
+                        }
+                    });
+
+                    $("#ideaModal").modal("hide");
+                }
+                else {
+                    displayMessage("Warning", "Fill in the form");
+                }
             });
         });
     </script>
