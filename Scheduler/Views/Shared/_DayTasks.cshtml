@@ -1,0 +1,57 @@
+﻿@model Scheduler.Models.Schedule
+
+@if (Model != null)
+{
+    int counter = 1;
+
+    foreach (var target in Model.Tasks)
+    {
+        string status = String.IsNullOrEmpty(target.Status) ? "Unknown" : target.Status;
+        string color = status == "Unknown" ? "blue" : status == "Done" ? "green" : "red";
+
+        if (target.TargetId != null)
+        {
+            <input type="hidden" id="meta_target_id_@counter" value="@target.TargetId" />
+        }
+        <input type="hidden" id="meta_start_time_@counter" value="@target.StartTime" />
+        <input type="hidden" id="meta_end_time_@counter" value="@target.EndTime" />
+        <input type="hidden" id="meta_task_title_@counter" value="@target.Title" />
+        <div class="col-sm-10 col-sm-push-1 col-xs-12 info_block" id="task_@counter">
+            <div class="row" style="margin: 10px; padding: 10px;">
+                <span class="glyphicon glyphicon-remove pull-right" id="remove_task_@counter" style="cursor: pointer"></span>
+                <div class="col-sm-6 col-xs-12">
+                    <b>Start:</b> @target.StartTime.Hours<text>h</text>  @target.StartTime.Minutes<text>m</text>
+                </div>
+                <div class="col-sm-5 col-xs-12">
+                    <b>End:</b> @target.EndTime.Hours<text>h</text> @target.EndTime.Minutes<text>m</text>
+                </div>
+                <br />
+                <div class="col-xs-12">
+                    <h3 style="font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; text-align: center;">@target.Title</h3>
+                </div>
+                <div class="col-sm-10 col-sm-push-1 col-xs-12" style="max-height: 200px; word-break: break-all; overflow-y: scroll;">
+                    @MvcHtmlString.Create(target.Description)
+                </div>
+                <div class="col-sm-4 col-xs-12" style="margin-top: 10px;" id="status_descriptor_@counter">
+                    <p style="font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif"><b>Status: </b><span style="color: @color">@status</span> </p>
+                </div>
+                @if (status == "Unknown")
+                {
+                <div class="col-sm-4 col-sm-push-3 col-xs-12">
+                    <div class="form-horizontal">
+                        <div class="form-group" id="status_selector_@counter">
+                            <label for="select_status_@counter" class="control-label">Mark as:        </label>  <input type="radio" name="select_status_@counter" checked="checked" value="Done" /> Done    <input type="radio" name="select_status_@counter" value="Failed" /> Failed   <button type="button" class="btn btn-info btn-xs" id="set_status_@counter">Save</button>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+
+        ++counter;
+    }
+}
+else
+{
+    <p style="text-align:center;"> No tasks for this day were found. </p>
+}

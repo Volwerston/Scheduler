@@ -1,0 +1,290 @@
+﻿@{
+    ViewBag.Title = "ScheduleConstructor";
+    Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+}
+
+<style>
+    .rightbottom_panel {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        background-color: darkseagreen;
+        z-index: 1000;
+        padding: 10px;
+        cursor: pointer;
+    }
+</style>
+
+<div class="row" id="tasks_container" style="margin: 10px;">
+</div>
+<div class="row">
+    <div class="col-sm-6 col-sm-push-3 info_block">
+        <h4 style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;text-align: center;">Create a new task for this day</h4>
+        <div class="form-horizontal">
+            <div class="form-group" style="display: table; margin: auto;">
+                <input type="text" class="form-control" name="title" placeholder="Title" />
+            </div>
+            <label class="control-label col-xs-12" style="text-align: center;">Description of the task:</label>
+            <div class="form-group" style="margin: 10px; padding: 10px;">
+                <textarea name="task_description"></textarea>
+            </div>
+            <label class="control-label col-xs-12" style="text-align: center; margin-bottom: 10px;">Target which this target belongs to:</label>
+            <div class="form-group" style="display: table; margin: auto;">
+                <select class="form-control" name="target_name">
+                    <option value="none">It is a single task</option>
+                </select>
+            </div>
+            <label class="control-label col-xs-12" style="text-align: center; margin-bottom: 10px;">Start time:</label>
+            <div class="form-group" style="display: table; margin: auto;">
+                <input type="time" name="start_time" class="form-control" />
+            </div>
+            <label class="control-label col-xs-12" style="text-align: center; margin-bottom: 10px;">End time:</label>
+            <div class="form-group" style="display: table; margin: auto;">
+                <input type="time" name="end_time" class="form-control" />
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <div class="col-sm-6 col-sm-push-3 col-xs-12">
+                    <button type="button" class="btn btn-block custom-btn-success" id="add_task">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script src="//cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
+    <script type="text/javascript">
+        var allTargets = [];
+        var notAddedTargets = [];
+
+        function buildTask() {
+            var toReturn = {};
+
+            toReturn.Title = $('input[name="title"]').val().trim();
+            if (toReturn.Title == "") {
+                displayMessage("Warning", "Please specify the title of the task");
+                return null;
+            }
+
+            if ($('select[name="target_name"]').val() != "none" && $('input[name="title"]').val() != $('select[name="target_name"]').val())
+            {
+                displayMessage("Warning", "Task title and target name must be the same");
+                return null;
+            }
+
+            toReturn.Description = CKEDITOR.instances['task_description'].getData().trim();
+
+            var targetName = $('select[name="target_name"]').val();
+
+            if (targetName != "none") {
+                for (var i = 0; i < allTargets.length; ++i) {
+                    if (allTargets[i].Name == targetName) {
+                        toReturn.TargetId = allTargets[i].Id;
+                        break;
+                    }
+                }
+            }
+
+            toReturn.StartTime = $('input[name="start_time"]').val().trim();
+
+            if (toReturn.StartTime == "") {
+                displayMessage("Warning", "Please specify the start time of the task");
+                return null;
+            }
+
+            toReturn.EndTime = $('input[name="end_time"]').val().trim();
+
+            if (toReturn.EndTime == "") {
+                displayMessage("Warning", "Please specify the end time of the task");
+                return null;
+            }
+
+            var currTime = new Date();
+            var toCompare = currTime.getHours() + ":" + currTime.getMinutes() + ":" + currTime.getSeconds();
+
+            if (toReturn.StartTime < toCompare)
+            {
+                displayMessage("Warning", "You cannot add the tasks which precede the current time");
+                return null;
+            }
+            
+            if (toReturn.StartTime > toReturn.EndTime)
+            {
+                displayMessage("Warning", "End time cannot precede the start time");
+                return null;
+            }
+
+            toReturn.Date = new Date();
+
+            return toReturn;
+        }
+
+        function bindEvent() {
+            $('span[id^="remove_task"]').click(function () {
+
+                var id = $(this).attr('id').split('_')[2];
+
+                var startTime = $('#meta_start_time_' + id).val();
+                var date = new Date();
+                var format = date.getHours() + ":" + date.getMinutes() + ":" + date.getMinutes();
+
+                if (startTime < format) {
+                    displayMessage("Warning", "You cannot delete the task which has already started");
+                }
+                else {
+                    var toPass = {
+                        Num: id,
+                        Date: new Date()
+                    };
+
+                    $.ajax({
+                        method: 'DELETE',
+                        url: '/api/Schedule/DeleteTask',
+                        headers: {
+                            Authorization: 'Bearer ' + getCookie('access_token')
+                        },
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify(toPass),
+                        success: function (res) {
+                            window.location = '@Url.Action("ScheduleConstructor", "Main")';
+                        },
+                        error: function (res) {
+                            displayMessage("Error", "Internal server error");
+                        }
+                    });
+                }
+            });
+
+            $('button[id^="set_status"]').click(function () {
+                var id = $(this).attr('id').split('_')[2];
+                var endTime = $('#meta_end_time_' + id).val();
+
+                var currDate = new Date();
+                var currTime = currDate.getHours() + ":" + currDate.getMinutes() + ":" + currDate.getSeconds();
+                var status = $('input[name="select_status_' + id + '"]:checked').val().trim();
+
+                if (endTime >= currTime) {
+                    displayMessage("Warning", "You cannot change task's state before it's finished");
+                    return;
+                }
+                else if(status == "")
+                {
+                    displayMessage("Warning", "Please set proper status for the task");
+                    return;
+                }
+
+                    var toPass = {
+                        TaskNumber: id,
+                        Status: status,
+                        Date: new Date()
+                    };
+
+                    $.ajax({
+                        method: 'POST',
+                        url: '/api/Schedule/SetTaskStatus',
+                        headers: {
+                            Authorization: 'Bearer ' + getCookie('access_token')
+                        },
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify(toPass),
+                        success: function (res) {
+                            var color = status == "Done" ? "green" : "red";
+                            $("#status_descriptor_" + id).empty();
+                            $("#status_descriptor_" + id).html('<p style="font-family: \'Gill Sans\', \'Gill Sans MT\', Calibri, \'Trebuchet MS\', sans-serif"><b>Status: </b><span style="color: ' + color + '">' + status + '</span></p>');
+                            $("#status_selector_" + id).empty();
+                        },
+                        error: function (res) {
+                            displayMessage("Error", "Internal server error");
+                        }
+                    });
+            });
+        }
+
+        $(document).ready(function () {
+
+            CKEDITOR.replace('task_description');
+            CKEDITOR.config.language = 'en-US';
+
+            $('select[name="target_name"]').change(function () {
+                if($(this).val() != "none")
+                {
+                    $('input[name="title"]').val($(this).val());
+                }
+                else {
+                    $('input[name="title"]').val("");
+                }
+            });
+
+            $.ajax({
+                method: 'POST',
+                url: '/Main/DayTasks',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({ userTime: new Date() }),
+                success: function (res) {
+                    $("#tasks_container").append(res);
+                    bindEvent();
+
+                    $.ajax({
+                        method: 'PUT',
+                        url: '/api/Schedule/GetPossibleTargets',
+                        contentType: 'application/json; charset=utf-8',
+                        headers: {
+                            Authorization: 'Bearer ' + getCookie('access_token')
+                        },
+                        dataType: 'json',
+                        data: JSON.stringify(new Date()),
+                        success: function (res) {
+                            allTargets = res;
+                            var existingTargets = $('input[id^="meta_target_id"]');
+                            for (var i = 0; i < allTargets.length; ++i) {
+                                var found = false;
+                                existingTargets.each(function () {
+                                    if ($(this).val() == allTargets[i].Id) {
+                                        found = true;
+                                    }
+                                });
+
+                                if (!found) {
+                                    notAddedTargets.push(allTargets[i]);
+                                    $('select[name="target_name"]').append('<option value="' + allTargets[i].Name + '">' + allTargets[i].Name + '</option>');
+                                }
+                            }
+                        },
+                        error: function (res) {
+                            displayMessage("Error", "Internal server error");
+                        }
+                    });
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+
+           
+            $("#add_task").click(function () {
+                var toAdd = buildTask();
+
+                if (toAdd != null) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/api/Schedule/PostTask',
+                        headers: {
+                            Authorization: 'Bearer ' + getCookie('access_token')
+                        },
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify(toAdd),
+                        success: function (res) {
+                            window.location = '@Url.Action("ScheduleConstructor", "Main")';
+                        },
+                        error: function (res) {
+                            displayMessage("Error", "Internal Server Error");
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

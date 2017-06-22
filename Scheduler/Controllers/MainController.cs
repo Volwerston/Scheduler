@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Xml.Serialization;
@@ -191,6 +192,34 @@ namespace Scheduler.Controllers
             }
 
             return View();
+        }
+
+        [Authorize]
+        public ActionResult ScheduleConstructor()
+        {
+            return View();
+        }
+
+        [Authorize]
+        public async Task<ActionResult> DayTasks(DateTime userTime)
+        {
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/sjon"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+                HttpResponseMessage msg = await client.PostAsJsonAsync("/api/Schedule/GetSchedule", userTime);
+
+                if(msg.IsSuccessStatusCode)
+                {
+                    Schedule s = msg.Content.ReadAsAsync<Schedule>().Result;    
+                    return PartialView("_DayTasks", s);
+                }
+            }
+
+            return RedirectToAction("Index");
         }
 
         [Authorize]

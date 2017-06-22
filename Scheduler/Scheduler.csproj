@@ -253,6 +253,7 @@
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\IdeaController.cs" />
     <Compile Include="Controllers\MainController.cs" />
+    <Compile Include="Controllers\ScheduleController.cs" />
     <Compile Include="Controllers\TargetsController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -261,14 +262,18 @@
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\Algorithms.cs" />
     <Compile Include="Models\DbTarget.cs" />
+    <Compile Include="Models\DeleteTaskParams.cs" />
     <Compile Include="Models\Idea.cs" />
     <Compile Include="Models\IdeasChunkParams.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\MongoUserManager.cs" />
+    <Compile Include="Models\Schedule.cs" />
+    <Compile Include="Models\SingleTask.cs" />
     <Compile Include="Models\StartPageBlockData.cs" />
     <Compile Include="Models\Target.cs" />
     <Compile Include="Models\TargetNode.cs" />
     <Compile Include="Models\TargetSearchOptions.cs" />
+    <Compile Include="Models\TaskStatusPostParams.cs" />
     <Compile Include="Models\WorkSpan.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
@@ -353,6 +358,8 @@
     <Content Include="Views\Main\SearchForTargets.cshtml" />
     <Content Include="Views\Shared\_SearchTarget.cshtml" />
     <Content Include="Views\Main\TargetPage.cshtml" />
+    <Content Include="Views\Main\ScheduleConstructor.cshtml" />
+    <Content Include="Views\Shared\_DayTasks.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
