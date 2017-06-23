@@ -112,6 +112,32 @@ function CreateTarget() {
         return null;
     }
 
+    toReturn.duration = $('input[name="daily_duration"]').val();
+
+    if (toReturn.duration <= 0 || toReturn.duration == null) {
+        displayMessage("Warning", "Please specify the daily duration of the target");
+        return null;
+    }
+
+    toReturn.bestStartTime = $('input[name="start_time"]').val();
+
+    if (toReturn.bestStartTime == null || toReturn.bestStartTime == "") {
+        displayMessage("Warning", "Please specify the best start time of the target");
+        return null;
+    }
+
+    toReturn.bestEndTime = $('input[name="end_time"]').val();
+
+    if (toReturn.bestEndTime == null || toReturn.bestEndTime == "") {
+        displayMessage("Warning", "Please specify the best end time of the target");
+        return null;
+    }
+
+    if (toReturn.duration <= 0 || toReturn.duration == null) {
+        displayMessage("Warning", "Please specify the daily duration of the target");
+        return null;
+    }
+
     toReturn.prevTargets = [];
 
     $('input[name="target_name"]').val("");
@@ -119,6 +145,9 @@ function CreateTarget() {
     $('input[name="time_measure"]').val("");
     $('select[name="previous_targets"]').val("");
     $('select[name="working_days"]').val("");
+    $('input[name="daily_duration"]').val("");
+    $('input[name="start_time"]').val("");
+    $('input[name="end_time"]').val("");
 
     return toReturn;
 }
@@ -137,6 +166,18 @@ function isFormEmpty() {
         return false;
     }
 
+    if ($('input[name="daily_duration"]').val() != "") {
+        return false;
+    }
+
+    if ($('input[name="start_time"]').val() != "") {
+        return false;
+    }
+
+    if ($('input[name="end_time"]').val() != "") {
+        return false;
+    }
+
     return true;
 }
 
@@ -150,6 +191,9 @@ function seedForm(id) {
             $('select[name="previous_targets"]').val(el.prevTargets);
             $('select[name="working_days"]').val(el.workingDays);
             $('select[name="priority"]').val(el.difficulty);
+            $('input[name="daily_duration"]').val(el.duration);
+            $('input[name="start_time"]').val(el.bestStartTime);
+            $('input[name="end_time"]').val(el.bestEndTime);
             break;
         }
     }
@@ -304,7 +348,7 @@ function restart() {
               return (l.source === source && l.target === target);
           })[0];
 
-          if(!link){
+          if (!link) {
               link = { source: source, target: target, left: false, right: false };
               link[direction] = true;
               links.push(link);
@@ -487,8 +531,8 @@ function keydown() {
 
     if (!selected_node && !selected_link) return;
     switch (d3.event.keyCode) {
-        case 8: 
-        case 46: 
+        case 8:
+        case 46:
             if (selected_node) {
 
                 if (selected_node.id == editedId) {
@@ -499,7 +543,7 @@ function keydown() {
                 nodes.splice(nodes.indexOf(selected_node), 1);
                 spliceLinksForNode(selected_node);
                 $("#target_" + selected_node.id).remove();
-                
+
                 if ($("#target_container").children().length == 0) {
                     $("#target_container").append('<p style="text-align: center">No targets found yet.</p>');
                 }
@@ -519,8 +563,7 @@ function keydown() {
                     if (nodes[i].id == currId) {
                         var finish = false;
                         for (var j = 0; j < nodes[i].elem.prevTargets.length; ++j) {
-                            if(nodes[i].elem.prevTargets[j] == prevId)
-                            {
+                            if (nodes[i].elem.prevTargets[j] == prevId) {
                                 nodes[i].elem.prevTargets.splice(j, 1);
                                 finish = true;
                                 break;
@@ -558,11 +601,11 @@ function keyup() {
 svg
   .on('mousemove', mousemove)
   .on('mouseup', mouseup)
-  .on('focus', function () {      
+  .on('focus', function () {
       d3.select(window)
         .on('keyup', keyup)
         .on('keydown', keydown);
-    })
+  })
   .on('blur', function () {
       d3.select(window)
         .on('keyup', null)

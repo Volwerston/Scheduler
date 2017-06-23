@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace Scheduler.Controllers
@@ -15,6 +16,8 @@ namespace Scheduler.Controllers
     {
         public List<string> TargetNames { get; set; }
         public List<DbTarget> Targets { get; set; }
+        public List<string> Tags { get; set; }
+        public string Title { get; set; }
     }
 
     [Authorize]
@@ -22,16 +25,29 @@ namespace Scheduler.Controllers
     public class TargetsController : ApiController
     {
 
-        public IHttpActionResult Get([FromUri]string id)
+        public IHttpActionResult Get([FromUri]string facadeId)
         {
             try
             {
                 MongoClient client = new MongoClient();
                 var db = client.GetDatabase("scheduler");
+
+                var facadeCollection = db.GetCollection<TargetFacade>("targetFacades");
                 var collection = db.GetCollection<DbTarget>("targets");
 
+                var target = facadeCollection.Find(Builders<TargetFacade>.Filter.Where(x => x.Id == facadeId)).FirstOrDefault();
 
-                DbTarget toReturn = collection.Find(Builders<DbTarget>.Filter.Where(x => x.Id == id && x.UserEmail == User.Identity.Name)).FirstOrDefault();
+                if(target == null)
+                {
+                    throw new Exception("Target not found");
+                }
+
+                DbTarget toReturn = collection.Find(Builders<DbTarget>.Filter.Where(x => x.Id == target.TargetId && x.UserEmail == User.Identity.Name)).FirstOrDefault();
+
+                if(toReturn == null)
+                {
+                    throw new Exception("Target not found");
+                }
 
                 return Ok(toReturn);
             }
@@ -74,9 +90,9 @@ namespace Scheduler.Controllers
             {
                 MongoClient client = new MongoClient();
                 var db = client.GetDatabase("scheduler");
-                var collection = db.GetCollection<DbTarget>("targets");
+                var collection = db.GetCollection<TargetFacade>("targetFacades");
 
-                IEnumerable<DbTarget> query = null;
+                IEnumerable<TargetFacade> query = null;
 
                 if (String.IsNullOrEmpty(options.Title))
                 {
@@ -90,7 +106,8 @@ namespace Scheduler.Controllers
                 else
                 {
                     query = collection.AsQueryable().ToList().Where(
-                        x => x.Name.ToLower().Contains(options.Title.ToLower())
+                        x => (x.Title.ToLower().Contains(options.Title.ToLower())
+                        || x.Tags.Intersect(options.Tags).Count() != 0)
                         && x.UserEmail == options.UserName
                         && String.Compare(x.Id,options.LastObjectId,true) > 0
                         ).Take(10);
@@ -101,10 +118,9 @@ namespace Scheduler.Controllers
                     var toReturn = query
                         .Select(x => new
                         {
-                            Name = x.Name,
+                            Name = x.Title,
                             Difficulty = x.Difficulty,
                             StartDate = x.StartDate,
-                            Solution = x.Solution,
                             Id = x.Id
                         })
                         .OrderByDescending(x => x.StartDate)
@@ -117,10 +133,9 @@ namespace Scheduler.Controllers
                     var toReturn = query
                         .Select(x => new
                         {
-                            Name = x.Name,
+                            Name = x.Title,
                             Difficulty = x.Difficulty,
                             StartDate = x.StartDate,
-                            Solution = x.Solution,
                             Id = x.Id
                         })
                         .OrderByDescending(y => y.Difficulty)
@@ -138,7 +153,7 @@ namespace Scheduler.Controllers
 
         [Route("PostToSave")]
         [HttpPost]
-        public IHttpActionResult Post([FromBody]TargetsToSave toSave)
+        public async Task<IHttpActionResult> Post([FromBody]TargetsToSave toSave)
         {
             try
             {
@@ -167,7 +182,22 @@ namespace Scheduler.Controllers
                 var db = client.GetDatabase("scheduler");
                 var collection = db.GetCollection<DbTarget>("targets");
 
-                collection.InsertOne(save[0]);
+                await collection.InsertOneAsync(save[0]);
+
+                DbTarget selected = collection.Find(Builders<DbTarget>.Filter.Where(x => x.UserEmail == User.Identity.Name && x.Name == save[0].Name)).Single();
+
+                TargetFacade f = new TargetFacade()
+                {
+                    Tags = toSave.Tags,
+                    Title = toSave.Title,
+                    TargetId = selected.Id,
+                    Difficulty = save[0].Difficulty,
+                    StartDate = save[0].StartDate,
+                    UserEmail = User.Identity.Name
+                };
+
+                IMongoCollection<TargetFacade> c = db.GetCollection<TargetFacade>("targetFacades");
+                await c.InsertOneAsync(f);
 
                 return Ok("Success");
             }

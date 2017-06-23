@@ -23,7 +23,7 @@
     }
 
     performance = (activeDays / (double)workingDays) * 100;
-    efficiency = (activeDays / (double)elapsedDays) * 100;
+    efficiency = elapsedDays != 0 ? (activeDays / (double)elapsedDays) * 100 : 0;
 }
 
 <style>
@@ -294,8 +294,8 @@
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Days elapsed: ' + obj.Elapsed + '</p>'
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Active days: ' + obj.ActiveDays + '</p>');
 
-            var currPerformance = parseFloat(obj.ActiveDays / obj.WorkingDays);
-            var currEfficiency = parseFloat(obj.ActiveDays / (obj.Elapsed - (obj.Difficulty - obj.WeekendsRemained)));
+            var currPerformance = parseFloat(obj.ActiveDays / obj.Duration);
+            var currEfficiency =  obj.Elapsed != 0 ? parseFloat(obj.ActiveDays / (obj.Elapsed - (obj.Difficulty - obj.WeekendsRemained))) : 0;
 
             buildArc(null, [currPerformance], 150, false, "subtarget_performance", 30);
             buildArc(null, [currEfficiency], 150, false, "subtarget_efficiency", 30);

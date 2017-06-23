@@ -172,26 +172,32 @@ namespace Scheduler.Controllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
                 client.BaseAddress = new Uri("http://localhost:24082");
 
-                HttpResponseMessage msg = client.GetAsync("/api/Targets/Get?id=" + id).Result;
+                HttpResponseMessage msg = client.GetAsync("/api/Targets/Get?facadeId=" + id).Result;
 
-                List<DbTarget> targets = new List<DbTarget>();
-                DbTarget currTarget = msg.Content.ReadAsAsync<DbTarget>().Result;
-                while(currTarget != null)
+                if (msg.IsSuccessStatusCode)
                 {
-                    targets.Add(currTarget);
-                    currTarget = currTarget.NextTarget;
-                }
+                    List<DbTarget> targets = new List<DbTarget>();
+                    DbTarget currTarget = msg.Content.ReadAsAsync<DbTarget>().Result;
+                    while (currTarget != null)
+                    {
+                        targets.Add(currTarget);
+                        currTarget = currTarget.NextTarget;
+                    }
 
-                for(int i = 0; i < targets.Count(); ++i)
-                {
-                    targets[i].NextTarget = null;
-                }
+                    for (int i = 0; i < targets.Count(); ++i)
+                    {
+                        targets[i].NextTarget = null;
+                    }
 
-                ViewData["targets"] = targets;
-                ViewData["id"] = id;
+                    ViewData["targets"] = targets;
+                    ViewData["id"] = id;
+
+
+                    return View();
+                }
             }
 
-            return View();
+            return RedirectToAction("StartPage");
         }
 
         [Authorize]
@@ -219,7 +225,7 @@ namespace Scheduler.Controllers
                 }
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction("StartPage");
         }
 
         [Authorize]

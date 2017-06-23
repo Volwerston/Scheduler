@@ -271,6 +271,7 @@
     <Compile Include="Models\SingleTask.cs" />
     <Compile Include="Models\StartPageBlockData.cs" />
     <Compile Include="Models\Target.cs" />
+    <Compile Include="Models\TargetFacade.cs" />
     <Compile Include="Models\TargetNode.cs" />
     <Compile Include="Models\TargetSearchOptions.cs" />
     <Compile Include="Models\TaskStatusPostParams.cs" />

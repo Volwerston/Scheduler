@@ -88,6 +88,9 @@
         }
 </style>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput-typeahead.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css" />
+
 <div class="row">
     <div class="col main-col col-sm-12" style="min-height: 300px;" id="my_svg">
     </div>
@@ -135,6 +138,24 @@
                     </select>
                 </div>
             </div>
+            <label for="daily_duration" class="control-label">Approximate daily duration (in minutes)</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <input type="number" name="daily_duration" class="form-control" />
+                </div>
+            </div>
+            <label for="start_time" class="control-label">Best start time:</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <input type="time" name="start_time" class="form-control" />
+                </div>
+            </div>
+            <label for="end_time" class="control-label">Best end time:</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <input type="time" name="end_time" class="form-control" />
+                </div>
+            </div>
             <div class="form-group">
                 <div class="col-sm-11">
                     <button type="button" id="add_target" class="btn btn-block custom-btn-success">Add</button>
@@ -153,10 +174,8 @@
         </div>
     </div>
 </div>
-
 <div id="sortableModal" class="modal fade" role="dialog">
     <div class="modal-dialog">
-        <!-- Modal content-->
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close dismiss_sortable">&times;</button>
@@ -165,6 +184,18 @@
                 <p>Here is the most optimal order of solving the subtargets. However, you can change it as much as you want</p>
                 <ul id="sortable" style="list-style-type:decimal"></ul>
                 <div class="form-horizontal">
+                    <div class="form-group">
+                        <label for="start_date" class="control-label col-sm-6 col-sm-offset-2">General title of the target group:</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control col-sm-offset-3" name="bunch_title" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tags" class="control-label col-sm-5 col-sm-offset-1">Tags:</label>
+                        <div class="col-sm-7 col-sm-push-3">
+                            <input type="text" class="form-control" data-role="tagsinput" name="tags">
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="start_date" class="control-label col-sm-5 col-sm-offset-3">On which day you start?</label>
                         <div class="col-sm-11">
@@ -178,11 +209,13 @@
                 <button type="button" class="btn btn-default dismiss_sortable">Close</button>
             </div>
         </div>
-
     </div>
 </div>
-
 @section scripts{
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js">
+    </script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput-angular.js">
+    </script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="~/Scripts/TargetGraph.js"></script>
@@ -245,6 +278,11 @@
                     toPassTargets.push({
                         Name: nodes[i].elem.name,
                         Solution: nodes[i].elem.tools,
+                        DailyDuration: nodes[i].elem.duration,
+                        BestWorkSpan: {
+                            StartTime: nodes[i].elem.bestStartTime,
+                            EndTime: nodes[i].elem.bestEndTime
+                        },
                         Duration: nodes[i].elem.numOfDays,
                         Difficulty: nodes[i].elem.difficulty,
                         WorkingDays: nodes[i].elem.workingDays,
@@ -259,7 +297,12 @@
                     toPassTargetNames.push($(this).text());
                 });
 
-                var toPass = { Targets: toPassTargets, TargetNames: toPassTargetNames };
+                var toPass = {
+                    Targets: toPassTargets,
+                    TargetNames: toPassTargetNames,
+                    Title: $('input[name="bunch_title"]').val(),
+                    Tags: $('input[name="tags"]').tagsinput('items')
+                };
 
                 $.ajax({
                     method: 'POST',

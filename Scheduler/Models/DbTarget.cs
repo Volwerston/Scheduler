@@ -21,8 +21,7 @@ namespace Scheduler.Models
         public int DailyDuration { get; set; }
         public WorkSpan BestWorkSpan { get; set; }
         public List<DayOfWeek> WorkingDays { get; set; }
-        public List<int> PreTargets { get; set; }
-        public List<string> Solution { get; set; }
+        public string Solution { get; set; }
         public string UserEmail { get; set; }
         public int ActiveDays { get; set; }
         public DbTarget NextTarget { get; set; }
