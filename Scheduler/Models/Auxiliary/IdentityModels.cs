@@ -19,8 +19,8 @@ namespace Scheduler.Models
 
         public string FirstName { get; set; }
         public string LastName { get; set; }
-
         public string ConfirmationToken { get; set; }
+        public int Bonus { get; set; }
     }
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>

@@ -51,7 +51,7 @@ namespace Scheduler.Controllers
                 var update = Builders<Schedule>.Update.Set(x => x.Tasks, s.Tasks);
 
                 await collection.UpdateOneAsync(filter, update);
-
+                
                 return Ok("Success");
             }
             catch(Exception e)

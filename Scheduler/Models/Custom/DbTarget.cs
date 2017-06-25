@@ -26,5 +26,6 @@ namespace Scheduler.Models
         public int ActiveDays { get; set; }
         public DbTarget NextTarget { get; set; }
         public DateTime StartDate { get; set; }
+        public bool IsPublic { get; set; }
     }
 }

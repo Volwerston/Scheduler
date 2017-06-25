@@ -37,21 +37,21 @@ namespace Scheduler.Controllers
 
                 var target = facadeCollection.Find(Builders<TargetFacade>.Filter.Where(x => x.Id == facadeId)).FirstOrDefault();
 
-                if(target == null)
+                if (target == null)
                 {
                     throw new Exception("Target not found");
                 }
 
                 DbTarget toReturn = collection.Find(Builders<DbTarget>.Filter.Where(x => x.Id == target.TargetId && x.UserEmail == User.Identity.Name)).FirstOrDefault();
 
-                if(toReturn == null)
+                if (toReturn == null)
                 {
                     throw new Exception("Target not found");
                 }
 
                 return Ok(toReturn);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return InternalServerError(e);
             }
@@ -92,29 +92,56 @@ namespace Scheduler.Controllers
                 var db = client.GetDatabase("scheduler");
                 var collection = db.GetCollection<TargetFacade>("targetFacades");
 
-                IEnumerable<TargetFacade> query = null;
+                List<TargetFacade> query = null;
+                if (options.Title == null) options.Title = "";
 
-                if (String.IsNullOrEmpty(options.Title))
+                if (String.IsNullOrEmpty(options.Title) && (options.Tags == null || options.Tags.Count() == 0))
                 {
                     query = collection.AsQueryable().ToList()
                         .Where(
                     x => x.UserEmail == options.UserName
                     && String.Compare(x.Id, options.LastObjectId, true) > 0
-                    ).Take(10);
+                    ).Take(10).ToList();
 
                 }
                 else
                 {
-                    query = collection.AsQueryable().ToList().Where(
-                        x => (x.Title.ToLower().Contains(options.Title.ToLower())
-                        || x.Tags.Intersect(options.Tags).Count() != 0)
-                        && x.UserEmail == options.UserName
-                        && String.Compare(x.Id,options.LastObjectId,true) > 0
-                        ).Take(10);
+                    if (options.Title.Trim() == "")
+                    {
+                        query = collection.AsQueryable().ToList().Where(
+               x => (x.Tags.Intersect(options.Tags).Count() != 0)
+                    && x.UserEmail == options.UserName
+                    && String.Compare(x.Id, options.LastObjectId, true) > 0
+                    ).Take(10).ToList();
+                    }
+                    else if (options.Tags == null || options.Tags.Count() == 0)
+                    {
+                        query = collection.AsQueryable().ToList().Where(
+                                 x => x.Title.Trim().ToLower().Contains(options.Title.Trim().ToLower())
+                                    && x.UserEmail == options.UserName
+                                    && String.Compare(x.Id, options.LastObjectId, true) > 0
+                                    ).Take(10).ToList();
+                    }
+                    else
+                    {
+                        query = collection.AsQueryable().ToList().Where(
+                                     x => (x.Title.Trim().ToLower().Contains(options.Title.Trim().ToLower())
+                                         || x.Tags.Intersect(options.Tags).Count() != 0)
+                                         && x.UserEmail == options.UserName
+                                         && String.Compare(x.Id, options.LastObjectId, true) > 0
+                                           ).Take(10).ToList();
+                    }
                 }
 
                 if (options.OrderBy == "date")
                 {
+                    if (query.Count() != 0)
+                    {
+                        query = query.OrderByDescending(x => x.StartDate).ToList();
+                        string maxId = query.Max(x => x.Id);
+                        query[query.Count() - 1].Id = maxId;
+                    }
+
                     var toReturn = query
                         .Select(x => new
                         {
@@ -123,13 +150,19 @@ namespace Scheduler.Controllers
                             StartDate = x.StartDate,
                             Id = x.Id
                         })
-                        .OrderByDescending(x => x.StartDate)
                         .ToList();
 
                     return Ok(toReturn);
                 }
                 else
                 {
+                    if (query.Count() != 0)
+                    {
+                        query = query.OrderByDescending(y => y.Difficulty).ToList();
+                        string maxId = query.Max(x => x.Id);
+                        query[query.Count() - 1].Id = maxId;
+                    }
+
                     var toReturn = query
                         .Select(x => new
                         {
@@ -138,7 +171,6 @@ namespace Scheduler.Controllers
                             StartDate = x.StartDate,
                             Id = x.Id
                         })
-                        .OrderByDescending(y => y.Difficulty)
                         .ToList();
 
                     return Ok(toReturn);

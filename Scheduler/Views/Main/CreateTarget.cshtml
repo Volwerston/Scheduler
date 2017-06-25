@@ -122,7 +122,7 @@
                         <option value="4">Thursday</option>
                         <option value="5">Friday</option>
                         <option value="6">Saturday</option>
-                        <option value="7">Sunday</option>
+                        <option value="0">Sunday</option>
                     </select>
                 </div>
             </div>
@@ -154,6 +154,13 @@
             <div class="form-group">
                 <div class="col-sm-11">
                     <input type="time" name="end_time" class="form-control" />
+                </div>
+            </div>
+            <label for="is_public" class="control-label">Keep this subtarget's solution public?</label>
+            <div class="form-group">
+                <div class="col-sm-11">
+                    <input type="radio" name="is_public" value="true" checked="checked" /> Yes
+                    <input type="radio" name="is_public" value="false" /> No
                 </div>
             </div>
             <div class="form-group">
@@ -287,7 +294,8 @@
                         Difficulty: nodes[i].elem.difficulty,
                         WorkingDays: nodes[i].elem.workingDays,
                         StartDate: nodes[i].elem.name == firstOneName ? $('input[name="start_date"]').val() : null,
-                        UserEmail: '@User.Identity.Name'
+                        UserEmail: '@User.Identity.Name',
+                        IsPublic: nodes[i].elem.isPublic
                     });
                 }
 

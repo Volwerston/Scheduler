@@ -593,6 +593,7 @@ namespace Scheduler.Controllers
                 LastName = model.LastName,
                 UserName = model.Email,
                 Email = model.Email,
+                Bonus = 0,
                 ConfirmationToken = CreateConfirmationToken()
             };
 

@@ -138,6 +138,8 @@ function CreateTarget() {
         return null;
     }
 
+    toReturn.isPublic = $('input[name="is_public"]:checked').val();
+
     toReturn.prevTargets = [];
 
     $('input[name="target_name"]').val("");
@@ -194,6 +196,8 @@ function seedForm(id) {
             $('input[name="daily_duration"]').val(el.duration);
             $('input[name="start_time"]').val(el.bestStartTime);
             $('input[name="end_time"]').val(el.bestEndTime);
+            $('input[name="is_public"]').val(el.isPublic);
+
             break;
         }
     }

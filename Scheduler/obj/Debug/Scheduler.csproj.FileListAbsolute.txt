@@ -187,3 +187,7 @@ C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\System.Runtime.InteropServices.R
 C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Bson.xml
 C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.xml
 C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\MongoDB.Driver.Core.xml
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.dll
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.dll
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.xml
+C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.xml

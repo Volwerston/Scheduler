@@ -112,13 +112,13 @@
             }
 
             $("#new_search").click(function () {
-                lastObjId = '@ViewData["object_id"]';
+                lastTargetId = '@ViewData["object_id"]';
 
                 $("#targets_container").empty();
 
                 var obj = {
                     Title: $('input[name="title"]').val(),
-                    Tags: $("#tags").tagsinput('items'),
+                    Tags: $('input[name="tags"]').tagsinput('items'),
                     LastObjectId: lastTargetId,
                     UserName: '@User.Identity.Name',
                     OrderBy: $('select[name="sort_by"]').val()
