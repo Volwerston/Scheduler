@@ -67,27 +67,7 @@ namespace Scheduler.Controllers
             {
                 IMongoCollection<DbTarget> targets = db.GetCollection<DbTarget>("targets");
                 var bufTargets = await targets.FindAsync(Builders<DbTarget>.Filter.Where(x => x.UserEmail == User.Identity.Name));
-                List<DbTarget> toReturn = new List<DbTarget>();
-
-                var userTargets = bufTargets.ToList();
-
-                foreach (var target in userTargets)
-                {
-                    DbTarget curr = target;
-
-                    while (curr != null)
-                    {
-                        if (curr.StartDate != default(DateTime) && curr.ActiveDays < curr.Duration && curr.WorkingDays.Contains(Convert.ToDateTime(userTime).DayOfWeek))
-                        {
-                            curr.NextTarget = null;
-                            toReturn.Add(curr);
-                            break;
-                        }
-
-
-                        curr = curr.NextTarget;
-                    }
-                }
+                List<DbTarget> toReturn = Algorithms.Algorithms.GetCurrentTargets(Convert.ToDateTime(userTime).DayOfWeek, User.Identity.Name).Select(x => x.Item2).ToList();
 
                 return Ok(toReturn);
             }

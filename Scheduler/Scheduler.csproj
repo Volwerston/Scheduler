@@ -272,9 +272,12 @@
     <Compile Include="Models\Auxiliary\Algorithms.cs" />
     <Compile Include="Models\Auxiliary\DoneTargetTaskHandler.cs" />
     <Compile Include="Models\Auxiliary\FailedTargetTaskHandler.cs" />
+    <Compile Include="Models\Auxiliary\FormedScheduleMailService.cs" />
     <Compile Include="Models\Auxiliary\Handler.cs" />
+    <Compile Include="Models\Auxiliary\MailService.cs" />
     <Compile Include="Models\Auxiliary\OmmitedTargetTaskHandler.cs" />
     <Compile Include="Models\Auxiliary\SingleTaskHandler.cs" />
+    <Compile Include="Models\Auxiliary\UnformedScheduleMailService.cs" />
     <Compile Include="Models\Custom\DbTarget.cs" />
     <Compile Include="Models\Auxiliary\DeleteTaskParams.cs" />
     <Compile Include="Models\Custom\Idea.cs" />

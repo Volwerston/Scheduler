@@ -73,9 +73,8 @@ namespace Scheduler.Controllers
         }
 
         [Route("ConfigureTasks")]
-        public async Task<IHttpActionResult> Get()
+        public IHttpActionResult Post()
         {
-
             if (IsDayProceeded(DateTime.Now.AddDays(-1.0)))
             {
                 return Ok("Success");
@@ -104,32 +103,19 @@ namespace Scheduler.Controllers
                         handlers[i - 1].Next = handlers[i];
                     }
 
-                    var bufTargets = await targets.FindAsync(Builders<DbTarget>.Filter.Where(x => x.UserEmail == email));
+                    var bufTargets = targets.Find(Builders<DbTarget>.Filter.Where(x => x.UserEmail == email));
                     var userTargets = bufTargets.ToList();
 
-                    foreach (var target in userTargets)
-                    {
-                        DbTarget curr = target;
-
-                        while (curr != null)
-                        {
-                            if (curr.StartDate != default(DateTime) && curr.ActiveDays < curr.Duration && curr.WorkingDays.Contains(Convert.ToDateTime(DateTime.Now.AddDays(-1.0)).DayOfWeek))
-                            {
-                                toReturn.Add(new Tuple<DbTarget, DbTarget>(target, curr));
-                                break;
-                            }
-
-                            if (curr.StartDate == default(DateTime)) break;
-
-                            curr = curr.NextTarget;
-                        }
-                    }
+                    toReturn = Algorithms.Algorithms.GetCurrentTargets(Convert.ToDateTime(DateTime.Now.AddDays(-1.0)).DayOfWeek, email);
 
                     Schedule s = scheduleCollection.AsQueryable().ToList().Where(x => x.UserEmail == email && x.Date.Date == DateTime.Now.AddDays(-1.0).Date).SingleOrDefault();
 
-                    foreach (var task in s.Tasks)
+                    if (s != null)
                     {
-                        handlers[0].Accept(task, toReturn, email);
+                        foreach (var task in s.Tasks)
+                        {
+                            handlers[0].Accept(task, toReturn, email);
+                        }
                     }
 
 
@@ -156,11 +142,43 @@ namespace Scheduler.Controllers
                             target.Item2.WeekendsRemained = target.Item2.WeekendsRemained - 1;
                         }
 
-                        var filter = Builders<DbTarget>.Filter.Where(x => x.Id == target.Item1.Id);
-                        var update = Builders<DbTarget>.Update.Set(x => x, target.Item1);
-
-                        targets.UpdateOne(filter, update);
+                        targets.FindOneAndReplace(x => x.Id == target.Item1.Id, target.Item1);                  
                     }
+
+                    List<Tuple<DbTarget, DbTarget>> nextTargets = Algorithms.Algorithms.GetCurrentTargets(DateTime.Now.DayOfWeek, email);
+                    List<DbTarget> orderedTasks = Algorithms.Algorithms.DistributeDayTasks(nextTargets.Select(x => x.Item2).ToList());
+
+                    if (orderedTasks != null)
+                    {
+                        MailService service = new FormedScheduleMailService();
+                        string message = service.GetMailBody(orderedTasks);
+                        service.SendEmail("btsemail1@gmail.com", email, message);
+                    }
+                    else
+                    {
+                        MailService service = new UnformedScheduleMailService();
+                        string message = service.GetMailBody(null);
+                        service.SendEmail("btsemail1@gmail.com", email, message);
+                    }
+
+                    Schedule schedule = new Schedule()
+                    {
+                        Date = DateTime.Now,
+                        Tasks = orderedTasks.Select(x => new SingleTask()
+                        {
+                            Date = DateTime.Now,
+                            Description = "",
+                            StartTime = x.BestWorkSpan.StartTime,
+                            EndTime = x.BestWorkSpan.EndTime,
+                            Title = x.Name,
+                            TargetId = x.Id,
+                            Status = null
+                        })
+                         .ToList(),
+                        UserEmail = email
+                    };
+
+                    scheduleCollection.InsertOne(schedule);
                 }
 
                 AddDateToJournal(DateTime.Now.AddDays(-1.0));
@@ -192,6 +210,12 @@ namespace Scheduler.Controllers
             }
 
             return toReturn;
+        }
+
+        [Route("Foo")]
+        public IHttpActionResult Foo()
+        {
+            return Ok("Success");
         }
     }
 }

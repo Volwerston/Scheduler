@@ -191,3 +191,7 @@ C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.dll
 C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.dll
 C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.xml
 C:\Users\Юра\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.xml
+C:\Users\User\Desktop\Scheduler\Scheduler\bin\Revalee.Client.dll
+C:\Users\User\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.dll
+C:\Users\User\Desktop\Scheduler\Scheduler\bin\Revalee.Client.xml
+C:\Users\User\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.xml

@@ -19,11 +19,11 @@
     {
         activeDays += targets[i].ActiveDays;
         workingDays += targets[i].Duration;
-        elapsedDays += targets[i].Elapsed - (targets[i].Difficulty - targets[i].WeekendsRemained);
+        elapsedDays += targets[i].Elapsed;
     }
 
-    performance = (activeDays / (double)workingDays) * 100;
-    efficiency = elapsedDays != 0 ? (activeDays / (double)elapsedDays) * 100 : 0;
+    performance = (Math.Round(activeDays / (double)workingDays, 2)) * 100;
+    efficiency = elapsedDays != 0 ? (Math.Round(activeDays / (double)elapsedDays, 2)) * 100 : 0;
 }
 
 <style>
@@ -95,7 +95,7 @@
             @{int counter = 0; }
             @foreach (var target in targets)
             {
-                string color = (target.ActiveDays == target.Duration ? "green" : target.ActiveDays > 0 ? "yellow" : "blue");
+                string color = (target.ActiveDays == target.Duration ? "green" : target.ActiveDays > 0 ? "orange" : "blue");
 
                 <div class="col-xs-11" style="margin: 10px; background-color: @color; color: white; cursor: pointer;" id="target_@(counter)">
                     <h4 style="text-align: center; font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">@target.Name</h4>
@@ -294,8 +294,8 @@
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Days elapsed: ' + obj.Elapsed + '</p>'
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Active days: ' + obj.ActiveDays + '</p>');
 
-            var currPerformance = parseFloat(obj.ActiveDays / obj.Duration);
-            var currEfficiency =  obj.Elapsed != 0 ? parseFloat(obj.ActiveDays / (obj.Elapsed - (obj.Difficulty - obj.WeekendsRemained))) : 0;
+            var currPerformance = 100 * (parseFloat(obj.ActiveDays / obj.Duration).toFixed(2));
+            var currEfficiency =  obj.Elapsed != 0 ? 100*(parseFloat(obj.ActiveDays / obj.Elapsed).toFixed(2)) : 0;
 
             buildArc(null, [currPerformance], 150, false, "subtarget_performance", 30);
             buildArc(null, [currEfficiency], 150, false, "subtarget_efficiency", 30);

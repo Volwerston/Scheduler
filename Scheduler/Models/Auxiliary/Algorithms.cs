@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using Scheduler.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -193,6 +195,53 @@ namespace Algorithms
 
                 root.ChildrenDifficulty = root.Children.Select(x => x.ChildrenDifficulty).Aggregate((a, b) => a + b);
             }
+        }
+
+        public static List<DbTarget> DistributeDayTasks(List<DbTarget> t)
+        {
+            t = t.OrderBy(x => x.BestWorkSpan.StartTime).ToList();
+
+            for(int i = 1; i < t.Count(); ++i)
+            {
+                if(t[i-1].BestWorkSpan.StartTime < t[i].BestWorkSpan.StartTime && t[i].BestWorkSpan.StartTime < t[i-1].BestWorkSpan.EndTime)
+                {
+                    return null;
+                }
+            }
+
+            return t;
+        }
+
+
+        public static List<Tuple<DbTarget, DbTarget>> GetCurrentTargets(DayOfWeek d, string userEmail)
+        {
+            MongoClient client = new MongoClient();
+            var db = client.GetDatabase("scheduler");
+            IMongoCollection<DbTarget> targets = db.GetCollection<DbTarget>("targets");
+            List<Tuple<DbTarget, DbTarget>> toReturn = new List<Tuple<DbTarget, DbTarget>>();
+
+            var bufTargets = targets.Find(Builders<DbTarget>.Filter.Where(x => x.UserEmail == userEmail));
+            var userTargets = bufTargets.ToList();
+
+            foreach (var target in userTargets)
+            {
+                DbTarget curr = target;
+
+                while (curr != null)
+                {
+                    if (curr.StartDate != default(DateTime) && curr.StartDate.Date < DateTime.Now.Date && curr.ActiveDays < curr.Duration && curr.WorkingDays.Contains(d))
+                    {
+                        toReturn.Add(new Tuple<DbTarget, DbTarget>(target, curr));
+                        break;
+                    }
+
+                    if (curr.StartDate == default(DateTime)) break;
+
+                    curr = curr.NextTarget;
+                }
+            }
+
+            return toReturn;
         }
 
     }

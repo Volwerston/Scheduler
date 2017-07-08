@@ -122,7 +122,7 @@ namespace Scheduler.Models.Auxiliary
         {
             using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
             {
-                SqlCommand cmd = new SqlCommand("Update AspNetUsers Set Bonus = Bonus + @toAdd Where Email = @email");
+                SqlCommand cmd = new SqlCommand("Update AspNetUsers Set Bonus = Bonus + @toAdd Where Email = @email", con);
                 cmd.Parameters.AddWithValue("@toAdd", bonus);
                 cmd.Parameters.AddWithValue("@email", userEmail);
 
