@@ -51,6 +51,20 @@
     </div>
 </div>
 
+<div id="loadingModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-2 col-sm-push-5">
+                        <img src="~/Common/Images/ajax-loader.gif" style="display:inline;margin: auto" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section scripts{
     <script type="text/javascript">
 
@@ -62,27 +76,6 @@
 
             $(".infoUrlBlock").mouseover(function () {
                 $(this).find(".infoUrl").fadeIn(500);
-            });
-
-            $("#sign_in").click(function () {
-                $.ajax({
-                    method: "POST",
-                    url: "/token",
-                    contentType: "application/json",
-                    data: {
-                        username: $('#usr').val(),
-                        password: $('#pwd').val(),
-                        grant_type: 'password'
-                    },
-                    success: function (res) {
-                        document.cookie = "access_token=" + res.access_token;
-
-                        window.location.href = '@Url.Action("AccountPage", "Main")';
-                    },
-                    error: function (xhr, error, message) {
-                        window.location.href = '@Url.Action("StartPage", "Main")';
-                    }
-                });
             });
 
             $("#forgot_password").click(function () {

@@ -1,9 +1,8 @@
-﻿
+﻿@model Scheduler.Models.Custom.UserInfo
 @{
     ViewBag.Title = "AccountPage";
     Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
 }
-
 <style>
     .block_col {
         padding: 15px;
@@ -12,35 +11,385 @@
         box-shadow: 5px 5px 2px #888888;
     }
 
-    .col{
+    .col {
         padding: 15px;
         margin: 5px;
         background-color: antiquewhite;
     }
 </style>
-
 <div class="row">
-    <div class="col col-sm-3 block_col">
-        Photo
+    <div class="col col-sm-3 col-xs-5 block_col">
+        <img class="img-responsive" src="@ViewData["avatar"].ToString()" />
+        <button type="button" class="btn custom-btn-success btn-block" id="set_avatar" style="margin-top: 10px; text-align: center;" data-target="#avatarModal" data-toggle="modal">Change</button>
     </div>
-    <div class="col col-sm-8 block_col">
-        Personal data
+    <div class="col col-xs-6 col-sm-8 block_col">
+        <div class="row">
+            <div class="col-sm-6 col-sm-push-3" style="word-break: break-all">
+                <h4 style="text-align: center">@Model.FirstName @Model.LastName</h4>
+                <p>Country: @Model.Country</p>
+                <p>Region:  @Model.Region</p>
+                <p>Settlement: @Model.Settlement</p>
+                <p>Profession: @Model.Profession</p>
+                <p>Interests: @Model.Interests</p>
+                <p>Time zone: @Model.TimeZoneDescription</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4 col-sm-push-4">
+                <button type="button" class="btn custom-btn-success btn-block" data-toggle="modal" data-target="#profileModal">Edit profile data</button>
+            </div>
+        </div>
     </div>
 </div>
 <div class="row">
     <div class="col col-sm-5 block_col">
         <div class="row">
-            <div class="col">
-                Workflow
+            <div class="col" id="workflow">
+                <h4 style="text-align: center;"><b>Workflow</b></h4>
             </div>
         </div>
+        <br/>
+        <br/>
         <div class="row">
-            <div class="col">
-                Daily stats
+            <div class="col" id="daily_stats">
+                <h4 style="text-align: center;"><b>Daily statistics</b></h4>
             </div>
         </div>
     </div>
     <div class="col col-sm-6 block_col">
-        Personal info
+        <h4 style="text-align: center;">Add new post</h4>
+        <textarea name="user_post"></textarea>
+        <button type="button" style="margin-top: 10px;" class="btn btn-block custom-btn-success" id="add_post">Save</button>
+        <br />
+        <br />
+        <div id="posts_container">
+
+        </div>
     </div>
 </div>
+<div id="avatarModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("PostUserAvatar", "Main", null, FormMethod.Post, new { enctype = "multipart/form-data", style = "display:table; margin:auto" }))
+                {
+                    <div class="form-group">
+                        <input type="file" class="form-control" name="avatar" placeholder="Select photo" lang="en" />
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" class="btn custom-btn-success col-sm-6" style="margin-top: 10px;" value="Submit" />
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn custom-btn-success" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="profileModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Profile Data</h4>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("PostUserProfile", "Main", null, FormMethod.Post, new { style = "display: table; margin: auto;" }))
+                {
+                    <div class="form-group">
+                        <input type="text" name="Country" placeholder="Country" class="form-control" value="@Model.Country" />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="Region" placeholder="Region" class="form-control" value="@Model.Region" />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="Settlement" placeholder="Settlement" class="form-control" value="@Model.Settlement" />
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="Profession" placeholder="Profession" class="form-control" value="@Model.Profession" />
+                    </div>
+                    <div class="form-group">
+                        <textarea type="text" name="Interests" placeholder="Interests" class="form-control">@Model.Interests</textarea>
+                    </div>
+                    <div class="form-group">
+                        <select name="TimeZone" class="form-control">
+                            <option timeZoneId="1" gmtAdjustment="GMT-12:00" useDaylightTime="0" value="-12">(GMT-12:00) International Date Line West</option>
+                            <option timeZoneId="2" gmtAdjustment="GMT-11:00" useDaylightTime="0" value="-11">(GMT-11:00) Midway Island, Samoa</option>
+                            <option timeZoneId="3" gmtAdjustment="GMT-10:00" useDaylightTime="0" value="-10">(GMT-10:00) Hawaii</option>
+                            <option timeZoneId="4" gmtAdjustment="GMT-09:00" useDaylightTime="1" value="-9">(GMT-09:00) Alaska</option>
+                            <option timeZoneId="5" gmtAdjustment="GMT-08:00" useDaylightTime="1" value="-8">(GMT-08:00) Pacific Time (US & Canada)</option>
+                            <option timeZoneId="6" gmtAdjustment="GMT-08:00" useDaylightTime="1" value="-8">(GMT-08:00) Tijuana, Baja California</option>
+                            <option timeZoneId="7" gmtAdjustment="GMT-07:00" useDaylightTime="0" value="-7">(GMT-07:00) Arizona</option>
+                            <option timeZoneId="8" gmtAdjustment="GMT-07:00" useDaylightTime="1" value="-7">(GMT-07:00) Chihuahua, La Paz, Mazatlan</option>
+                            <option timeZoneId="9" gmtAdjustment="GMT-07:00" useDaylightTime="1" value="-7">(GMT-07:00) Mountain Time (US & Canada)</option>
+                            <option timeZoneId="10" gmtAdjustment="GMT-06:00" useDaylightTime="0" value="-6">(GMT-06:00) Central America</option>
+                            <option timeZoneId="11" gmtAdjustment="GMT-06:00" useDaylightTime="1" value="-6">(GMT-06:00) Central Time (US & Canada)</option>
+                            <option timeZoneId="12" gmtAdjustment="GMT-06:00" useDaylightTime="1" value="-6">(GMT-06:00) Guadalajara, Mexico City, Monterrey</option>
+                            <option timeZoneId="13" gmtAdjustment="GMT-06:00" useDaylightTime="0" value="-6">(GMT-06:00) Saskatchewan</option>
+                            <option timeZoneId="14" gmtAdjustment="GMT-05:00" useDaylightTime="0" value="-5">(GMT-05:00) Bogota, Lima, Quito, Rio Branco</option>
+                            <option timeZoneId="15" gmtAdjustment="GMT-05:00" useDaylightTime="1" value="-5">(GMT-05:00) Eastern Time (US & Canada)</option>
+                            <option timeZoneId="16" gmtAdjustment="GMT-05:00" useDaylightTime="1" value="-5">(GMT-05:00) Indiana (East)</option>
+                            <option timeZoneId="17" gmtAdjustment="GMT-04:00" useDaylightTime="1" value="-4">(GMT-04:00) Atlantic Time (Canada)</option>
+                            <option timeZoneId="18" gmtAdjustment="GMT-04:00" useDaylightTime="0" value="-4">(GMT-04:00) Caracas, La Paz</option>
+                            <option timeZoneId="19" gmtAdjustment="GMT-04:00" useDaylightTime="0" value="-4">(GMT-04:00) Manaus</option>
+                            <option timeZoneId="20" gmtAdjustment="GMT-04:00" useDaylightTime="1" value="-4">(GMT-04:00) Santiago</option>
+                            <option timeZoneId="22" gmtAdjustment="GMT-03:00" useDaylightTime="1" value="-3">(GMT-03:00) Brasilia</option>
+                            <option timeZoneId="23" gmtAdjustment="GMT-03:00" useDaylightTime="0" value="-3">(GMT-03:00) Buenos Aires, Georgetown</option>
+                            <option timeZoneId="24" gmtAdjustment="GMT-03:00" useDaylightTime="1" value="-3">(GMT-03:00) Greenland</option>
+                            <option timeZoneId="25" gmtAdjustment="GMT-03:00" useDaylightTime="1" value="-3">(GMT-03:00) Montevideo</option>
+                            <option timeZoneId="26" gmtAdjustment="GMT-02:00" useDaylightTime="1" value="-2">(GMT-02:00) Mid-Atlantic</option>
+                            <option timeZoneId="27" gmtAdjustment="GMT-01:00" useDaylightTime="0" value="-1">(GMT-01:00) Cape Verde Is.</option>
+                            <option timeZoneId="28" gmtAdjustment="GMT-01:00" useDaylightTime="1" value="-1">(GMT-01:00) Azores</option>
+                            <option timeZoneId="29" gmtAdjustment="GMT+00:00" useDaylightTime="0" value="0">(GMT+00:00) Casablanca, Monrovia, Reykjavik</option>
+                            <option timeZoneId="30" gmtAdjustment="GMT+00:00" useDaylightTime="1" value="0">(GMT+00:00) Greenwich Mean Time : Dublin, Edinburgh, Lisbon, London</option>
+                            <option timeZoneId="31" gmtAdjustment="GMT+01:00" useDaylightTime="1" value="1">(GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna</option>
+                            <option timeZoneId="32" gmtAdjustment="GMT+01:00" useDaylightTime="1" value="1">(GMT+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague</option>
+                            <option timeZoneId="33" gmtAdjustment="GMT+01:00" useDaylightTime="1" value="1">(GMT+01:00) Brussels, Copenhagen, Madrid, Paris</option>
+                            <option timeZoneId="34" gmtAdjustment="GMT+01:00" useDaylightTime="1" value="1">(GMT+01:00) Sarajevo, Skopje, Warsaw, Zagreb</option>
+                            <option timeZoneId="35" gmtAdjustment="GMT+01:00" useDaylightTime="1" value="1">(GMT+01:00) West Central Africa</option>
+                            <option timeZoneId="36" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Amman</option>
+                            <option timeZoneId="37" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Athens, Bucharest, Istanbul</option>
+                            <option timeZoneId="38" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Beirut</option>
+                            <option timeZoneId="39" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Cairo</option>
+                            <option timeZoneId="40" gmtAdjustment="GMT+02:00" useDaylightTime="0" value="2">(GMT+02:00) Harare, Pretoria</option>
+                            <option timeZoneId="41" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius</option>
+                            <option timeZoneId="42" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Jerusalem</option>
+                            <option timeZoneId="43" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Minsk</option>
+                            <option timeZoneId="44" gmtAdjustment="GMT+02:00" useDaylightTime="1" value="2">(GMT+02:00) Windhoek</option>
+                            <option timeZoneId="45" gmtAdjustment="GMT+03:00" useDaylightTime="0" value="3">(GMT+03:00) Kuwait, Riyadh, Baghdad</option>
+                            <option timeZoneId="46" gmtAdjustment="GMT+03:00" useDaylightTime="1" value="3">(GMT+03:00) Moscow, St. Petersburg, Volgograd</option>
+                            <option timeZoneId="47" gmtAdjustment="GMT+03:00" useDaylightTime="0" value="3">(GMT+03:00) Nairobi</option>
+                            <option timeZoneId="48" gmtAdjustment="GMT+03:00" useDaylightTime="0" value="3">(GMT+03:00) Tbilisi</option>
+                            <option timeZoneId="50" gmtAdjustment="GMT+04:00" useDaylightTime="0" value="4">(GMT+04:00) Abu Dhabi, Muscat</option>
+                            <option timeZoneId="51" gmtAdjustment="GMT+04:00" useDaylightTime="1" value="4">(GMT+04:00) Baku</option>
+                            <option timeZoneId="52" gmtAdjustment="GMT+04:00" useDaylightTime="1" value="4">(GMT+04:00) Yerevan</option>
+                            <option timeZoneId="54" gmtAdjustment="GMT+05:00" useDaylightTime="1" value="5">(GMT+05:00) Yekaterinburg</option>
+                            <option timeZoneId="55" gmtAdjustment="GMT+05:00" useDaylightTime="0" value="5">(GMT+05:00) Islamabad, Karachi, Tashkent</option>
+                            <option timeZoneId="59" gmtAdjustment="GMT+06:00" useDaylightTime="1" value="6">(GMT+06:00) Almaty, Novosibirsk</option>
+                            <option timeZoneId="60" gmtAdjustment="GMT+06:00" useDaylightTime="0" value="6">(GMT+06:00) Astana, Dhaka</option>
+                            <option timeZoneId="62" gmtAdjustment="GMT+07:00" useDaylightTime="0" value="7">(GMT+07:00) Bangkok, Hanoi, Jakarta</option>
+                            <option timeZoneId="63" gmtAdjustment="GMT+07:00" useDaylightTime="1" value="7">(GMT+07:00) Krasnoyarsk</option>
+                            <option timeZoneId="64" gmtAdjustment="GMT+08:00" useDaylightTime="0" value="8">(GMT+08:00) Beijing, Chongqing, Hong Kong, Urumqi</option>
+                            <option timeZoneId="65" gmtAdjustment="GMT+08:00" useDaylightTime="0" value="8">(GMT+08:00) Kuala Lumpur, Singapore</option>
+                            <option timeZoneId="66" gmtAdjustment="GMT+08:00" useDaylightTime="0" value="8">(GMT+08:00) Irkutsk, Ulaan Bataar</option>
+                            <option timeZoneId="67" gmtAdjustment="GMT+08:00" useDaylightTime="0" value="8">(GMT+08:00) Perth</option>
+                            <option timeZoneId="68" gmtAdjustment="GMT+08:00" useDaylightTime="0" value="8">(GMT+08:00) Taipei</option>
+                            <option timeZoneId="69" gmtAdjustment="GMT+09:00" useDaylightTime="0" value="9">(GMT+09:00) Osaka, Sapporo, Tokyo</option>
+                            <option timeZoneId="70" gmtAdjustment="GMT+09:00" useDaylightTime="0" value="9">(GMT+09:00) Seoul</option>
+                            <option timeZoneId="71" gmtAdjustment="GMT+09:00" useDaylightTime="1" value="9">(GMT+09:00) Yakutsk</option>
+                            <option timeZoneId="74" gmtAdjustment="GMT+10:00" useDaylightTime="0" value="10">(GMT+10:00) Brisbane</option>
+                            <option timeZoneId="75" gmtAdjustment="GMT+10:00" useDaylightTime="1" value="10">(GMT+10:00) Canberra, Melbourne, Sydney</option>
+                            <option timeZoneId="76" gmtAdjustment="GMT+10:00" useDaylightTime="1" value="10">(GMT+10:00) Hobart</option>
+                            <option timeZoneId="77" gmtAdjustment="GMT+10:00" useDaylightTime="0" value="10">(GMT+10:00) Guam, Port Moresby</option>
+                            <option timeZoneId="78" gmtAdjustment="GMT+10:00" useDaylightTime="1" value="10">(GMT+10:00) Vladivostok</option>
+                            <option timeZoneId="79" gmtAdjustment="GMT+11:00" useDaylightTime="1" value="11">(GMT+11:00) Magadan, Solomon Is., New Caledonia</option>
+                            <option timeZoneId="80" gmtAdjustment="GMT+12:00" useDaylightTime="1" value="12">(GMT+12:00) Auckland, Wellington</option>
+                            <option timeZoneId="81" gmtAdjustment="GMT+12:00" useDaylightTime="0" value="12">(GMT+12:00) Fiji, Kamchatka, Marshall Is.</option>
+                        </select>	
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" class="btn custom-btn-success btn-block" value="Submit" />
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section scripts{
+    <script src="//cdn.ckeditor.com/4.7.0/basic/ckeditor.js"></script>
+    <script type="text/javascript">
+
+        var lastId = 0;
+        var sendMore = true;
+
+        function deletePost(id)
+        {
+            $.ajax({
+                method: 'DELETE',
+                url: '/api/UserInfo/DeletePost?id=' + id,
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                dataType: 'json',
+                success: function (res) {
+                    $("#post_" + id).remove();
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        }
+
+        function sendRequest() {
+
+            var toPass = {
+                LastId: lastId,
+                Email: '@User.Identity.Name'
+            };
+
+            $.ajax({
+                method: 'POST',
+                url: '/api/UserInfo/FindUserPosts',
+                dataType: "json",
+                data: JSON.stringify(toPass),
+                async: false,
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: "application/json; charset=utf-8",
+                success: function (res) {
+                    if (res.length > 0) {
+                        for (var i = 0; i < res.length; ++i) {
+                            if (res[i].Id > lastId) lastId = res[i].Id;
+                            $("#posts_container").append('<div id="post_' + res[i].Id + '" style="min-height: 150px; border: 1px solid black; word-break: break-all; margin: 10px" class="col-sm-12"><span class="glyphicon glyphicon-remove pull-right" onclick="deletePost(' + res[i].Id + ')" style="cursor: pointer"></span><p> Added on: ' + res[i].AddingTime.split('T')[0] + ' ' + res[i].AddingTime.split('T')[1] + '</p><p>' + res[i].Text + '</p></div>');
+                        }
+                    }
+                    else sendMore = false;
+                },
+                error: function (res) {
+                    sendMore = false;
+                }
+            });
+        }
+
+        $(document).scroll(function () {
+            if ($(document).height() - ($(window).height() + $(window).scrollTop()) < 50){
+                if(sendMore)
+                sendRequest();
+            }
+        });
+
+        $(document).ready(function () {
+
+            CKEDITOR.replace('user_post');
+            CKEDITOR.config.language = 'en-US';
+
+            sendRequest();
+
+            $.ajax({
+                method: 'POST',
+                url: '/api/Schedule/GetSchedule',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify(new Date()),
+                success: function (res) {
+                    if (res == null) {
+                        $("#workflow").append('<p style="text-align: center;">No tasks found for today.</p>');
+                        $("#daily_stats").append('<p style="text-align: center;">No tasks found for today.</p>');
+                    }
+                    else {
+                        var overallTime = 0;
+                        var workedTime = 0;
+                        var failedTasks = 0;
+                        var doneTasks = 0;
+                        var unknownTasks = 0;
+                        var currTaskFound = false;
+                        var nextTask = null;
+                        var currTask = null;
+
+                        for (var i = 0; i < res.Tasks.length; ++i) {
+                            var et = new Date("01.01.0001 " + res.Tasks[i].EndTime);
+                            var st = new Date("01.01.0001 " + res.Tasks[i].StartTime);
+                            overallTime += et.getHours()*60 + et.getMinutes() - st.getHours()*60 - st.getMinutes();
+
+                            switch (res.Tasks[i].Status) {
+                                case "Done":
+                                    ++doneTasks;
+                                    workedTime += et.getHours() * 60 + et.getMinutes() - st.getHours() * 60 - st.getMinutes();
+                                    break;
+                                case "Failed":
+                                    ++failedTasks;
+                                    break;
+                                default:
+                                    ++unknownTasks;
+                                    break;
+                            }
+
+                            if (!currTaskFound) {
+                                var startTime = st.getHours() + ":" + st.getMinutes() + ":" + st.getSeconds();
+                                var endTime = et.getHours() + ":" + et.getMinutes() + ":" + et.getSeconds();
+                                var time = new Date();
+                                var currTime = time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
+
+                                if (startTime < currTime && currTime < endTime) {
+                                    currTaskFound = true;
+                                    currTask = res.Tasks[i];
+
+                                    if(i != res.Tasks.length - 1)
+                                    {
+                                        nextTask = res.Tasks[i + 1];
+                                    }
+                                }
+                            }
+                        }
+
+                        if(!currTaskFound)
+                        {
+                            $("#workflow").append('<p style="text-align: center;">No tasks found this time</p>');
+                        }
+                        else {
+                            $("#workflow").append('<p style="text-align: center;">' + currTask.Title + '</p>');
+                        }
+
+                        $("#daily_stats").append('<p style="text-align: center">Done tasks: ' + doneTasks + '</p>');
+                        $("#daily_stats").append('<p style="text-align: center">Failed tasks: ' + failedTasks + '</p>');
+                        $("#daily_stats").append('<p style="text-align: center">Tasks in progress: ' + unknownTasks + '</p>');
+                        $("#daily_stats").append('<p style="text-align: center">Overall working time: ' + overallTime / 60 + 'h ' + overallTime % 60 + 'm </p>');
+                        $("#daily_stats").append('<p style="text-align: center">Time you worked: ' + workedTime / 60 + 'h ' + workedTime % 60 + 'm </p>');
+
+                        if(nextTask != null)
+                            $("#daily_stats").append('<p style="text-align: center">Next task: ' + nextTask.Title + '</p>');
+                        else 
+                            $("#daily_stats").append('<p style="text-align: center">You have no tasks to do after the current one</p>');
+
+                    }
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                    $("#workflow").append('<p style="text-align: center;">No tasks found this time</p>');
+                    $("#daily_stats").append('<p style="text-align: center;">No tasks found for today.</p>');
+                }
+            });
+
+            $("#add_post").click(function () {
+
+                var toPass = {
+                    AddingTime: new Date(),
+                    Text: CKEDITOR.instances['user_post'].getData().trim(),
+                    UserEmail: '@User.Identity.Name'
+                };
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/UserInfo/AddUserPost',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(toPass),
+                    success: function (res) {
+                        window.location = '@Url.Action("AccountPage", "Main")';
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+            });
+        });
+    </script>
+}

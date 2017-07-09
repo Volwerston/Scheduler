@@ -73,8 +73,9 @@ namespace Scheduler.Controllers
         }
 
         [Route("ConfigureTasks")]
-        public IHttpActionResult Post()
+        public async Task<IHttpActionResult> Post()
         {
+
             if (IsDayProceeded(DateTime.Now.AddDays(-1.0)))
             {
                 return Ok("Success");
@@ -82,7 +83,11 @@ namespace Scheduler.Controllers
 
             try
             {
-                List<string> emails = GetUserEmails();
+
+                int neededTimeOffset = 24 - DateTime.Now.Hour + TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).Hours;
+                if (neededTimeOffset > 12) neededTimeOffset -= 12;
+
+                List<string> emails = GetUserEmails(neededTimeOffset);
                 List<Tuple<DbTarget, DbTarget>> toReturn = new List<Tuple<DbTarget, DbTarget>>();
                 MongoClient client = new MongoClient();
                 var db = client.GetDatabase("scheduler");
@@ -103,19 +108,32 @@ namespace Scheduler.Controllers
                         handlers[i - 1].Next = handlers[i];
                     }
 
-                    var bufTargets = targets.Find(Builders<DbTarget>.Filter.Where(x => x.UserEmail == email));
+                    var bufTargets = await targets.FindAsync(Builders<DbTarget>.Filter.Where(x => x.UserEmail == email));
                     var userTargets = bufTargets.ToList();
 
-                    toReturn = Algorithms.Algorithms.GetCurrentTargets(Convert.ToDateTime(DateTime.Now.AddDays(-1.0)).DayOfWeek, email);
+                    foreach (var target in userTargets)
+                    {
+                        DbTarget curr = target;
+
+                        while (curr != null)
+                        {
+                            if (curr.StartDate != default(DateTime) && curr.ActiveDays < curr.Duration && curr.WorkingDays.Contains(Convert.ToDateTime(DateTime.Now.AddDays(-1.0)).DayOfWeek))
+                            {
+                                toReturn.Add(new Tuple<DbTarget, DbTarget>(target, curr));
+                                break;
+                            }
+
+                            if (curr.StartDate == default(DateTime)) break;
+
+                            curr = curr.NextTarget;
+                        }
+                    }
 
                     Schedule s = scheduleCollection.AsQueryable().ToList().Where(x => x.UserEmail == email && x.Date.Date == DateTime.Now.AddDays(-1.0).Date).SingleOrDefault();
 
-                    if (s != null)
+                    foreach (var task in s.Tasks)
                     {
-                        foreach (var task in s.Tasks)
-                        {
-                            handlers[0].Accept(task, toReturn, email);
-                        }
+                        handlers[0].Accept(task, toReturn, email);
                     }
 
 
@@ -133,7 +151,7 @@ namespace Scheduler.Controllers
 
                         notifications.InsertOne(n);
 
-                        if(target.Item2.WeekendsRemained == 0)
+                        if (target.Item2.WeekendsRemained == 0)
                         {
                             target.Item2.Elapsed = target.Item2.Elapsed + 1;
                         }
@@ -142,43 +160,43 @@ namespace Scheduler.Controllers
                             target.Item2.WeekendsRemained = target.Item2.WeekendsRemained - 1;
                         }
 
-                        targets.FindOneAndReplace(x => x.Id == target.Item1.Id, target.Item1);                  
+                        targets.FindOneAndReplace(x => x.Id == target.Item1.Id, target.Item1);
                     }
 
                     List<Tuple<DbTarget, DbTarget>> nextTargets = Algorithms.Algorithms.GetCurrentTargets(DateTime.Now.DayOfWeek, email);
                     List<DbTarget> orderedTasks = Algorithms.Algorithms.DistributeDayTasks(nextTargets.Select(x => x.Item2).ToList());
 
-                    if (orderedTasks != null)
-                    {
-                        MailService service = new FormedScheduleMailService();
-                        string message = service.GetMailBody(orderedTasks);
-                        service.SendEmail("btsemail1@gmail.com", email, message);
-                    }
-                    else
-                    {
-                        MailService service = new UnformedScheduleMailService();
-                        string message = service.GetMailBody(null);
-                        service.SendEmail("btsemail1@gmail.com", email, message);
-                    }
+                        if (orderedTasks != null)
+                        {
+                            MailService service = new FormedScheduleMailService();
+                            string message = service.GetMailBody(orderedTasks);
+                            service.SendEmail("btsemail1@gmail.com", email, message);
+                        }
+                        else
+                        {
+                            MailService service = new UnformedScheduleMailService();
+                            string message = service.GetMailBody(null);
+                            service.SendEmail("btsemail1@gmail.com", email, message);
+                        }
 
-                    Schedule schedule = new Schedule()
-                    {
-                        Date = DateTime.Now,
-                        Tasks = orderedTasks.Select(x => new SingleTask()
+                        Schedule schedule = new Schedule()
                         {
                             Date = DateTime.Now,
-                            Description = "",
-                            StartTime = x.BestWorkSpan.StartTime,
-                            EndTime = x.BestWorkSpan.EndTime,
-                            Title = x.Name,
-                            TargetId = x.Id,
-                            Status = null
-                        })
-                         .ToList(),
-                        UserEmail = email
-                    };
+                            Tasks = orderedTasks.Select(x => new SingleTask()
+                            {
+                                Date = DateTime.Now,
+                                Description = "",
+                                StartTime = x.BestWorkSpan.StartTime,
+                                EndTime = x.BestWorkSpan.EndTime,
+                                Title = x.Name,
+                                TargetId = x.Id,
+                                Status = null
+                            })
+                             .ToList(),
+                            UserEmail = email
+                        };
 
-                    scheduleCollection.InsertOne(schedule);
+                        scheduleCollection.InsertOne(schedule);               
                 }
 
                 AddDateToJournal(DateTime.Now.AddDays(-1.0));
@@ -192,13 +210,14 @@ namespace Scheduler.Controllers
         }
 
         [NonAction]
-        private List<string> GetUserEmails()
+        private List<string> GetUserEmails(int offset)
         {
             List<string> toReturn = new List<string>();
 
             using (SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
             {
-                SqlCommand cmd = new SqlCommand("SELECT Email FROM AspNetUsers", connection);
+                SqlCommand cmd = new SqlCommand("SELECT UserEmail from UserInfo Where TimeZone = @zone", connection);
+                cmd.Parameters.AddWithValue("@zone", offset);
 
                 connection.Open();
 
@@ -210,12 +229,6 @@ namespace Scheduler.Controllers
             }
 
             return toReturn;
-        }
-
-        [Route("Foo")]
-        public IHttpActionResult Foo()
-        {
-            return Ok("Success");
         }
     }
 }

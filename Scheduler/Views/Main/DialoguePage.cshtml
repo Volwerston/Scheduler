@@ -1,0 +1,86 @@
+﻿@model Scheduler.Models.Custom.Dialogue
+@{
+    ViewBag.Title = "Dialogue page";
+    Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-sm-8 col-sm-push-2 col-xs-12 info_block">
+        <div id="messages_container" style="max-height: 500px; min-height: 500px; overflow-x:hidden; overflow-y: scroll; margin: 15px; padding: 15px;">
+
+        </div>
+        <br/>
+        <br/>
+        <div class="row" style="margin: 10px; padding: 10px;">
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <textarea name="message_field"></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="send_message" class="btn custom-btn-success col-sm-4 col-sm-push-4 col-xs-12">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{  
+<script src="//cdn.ckeditor.com/4.7.0/standard/ckeditor.js"></script>
+    <script type="text/javascript">      
+        $(document).ready(function () {
+            CKEDITOR.replace('message_field');
+            CKEDITOR.config.language = 'en-US';
+
+            $.ajax({
+                method: 'GET',
+                url: '/Main/DialogueMessages?id=@Model.Id',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(res){
+                    $("#messages_container").append(res);
+                },
+                error: function(res){
+                    $("#messages_container").append('<p style="text-align: center">No messages were found</p>');
+                }
+            });
+
+            $("#send_message").click(function () {
+
+                var text = CKEDITOR.instances['message_field'].getData().trim();
+
+                if (text == "") {
+                    displayMessage("Warning", "Please fill in the message form");
+                    return;
+                }
+                
+                var toPass = {
+                    DialogueId: '@Model.Id',
+                    Text: text,
+                    SenderMail: '@User.Identity.Name',
+                    SendingTime: new Date()
+                };
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Dialogues/AddMessage',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(toPass),
+                    success: function (res) {
+                        window.location = '@Url.Action("DialoguePage", "Main", new
+                                      {
+                                          recipientMail = Model.Writer1.Email == User.Identity.Name ? Model.Writer2.Email : Model.Writer1.Email
+                                      })';
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+
+            });
+        });
+    </script>  
+    }

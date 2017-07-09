@@ -197,6 +197,7 @@ namespace Scheduler.Controllers
             return Ok();
         }
 
+
         // POST api/Account/RemoveLogin
         [Route("RemoveLogin")]
         public async Task<IHttpActionResult> RemoveLogin(RemoveLoginBindingModel model)
@@ -606,9 +607,22 @@ namespace Scheduler.Controllers
             else
             {
                 SendEmailConfirmation(user.Email, user.FirstName, user.ConfirmationToken);
+                CreateUserInfoEntry(user.Email);
             }
 
             return Ok();
+        }
+
+        private void CreateUserInfoEntry(string email)
+        {
+            using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand("Insert into UserInfo values(null, null, null, null, null, null, @mail, 0, 'GMT+00:00')", con);
+                cmd.Parameters.AddWithValue("@mail", email);
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private void SendEmailConfirmation(string email, string firstName, string confirmationToken)

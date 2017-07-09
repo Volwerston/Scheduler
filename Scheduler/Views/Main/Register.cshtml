@@ -31,6 +31,20 @@
     </div>
 </div>
 
+<div id="loadingModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-2 col-sm-push-5">
+                        <img src="~/Common/Images/ajax-loader.gif" style="display:inline;margin: auto" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section scripts{
 
     <script type="text/javascript">
@@ -48,17 +62,22 @@
                         Password:$('input[name="password"]').val(),
                         ConfirmPassword: $('input[name = "confirm_password"]').val(),
                     },
+                    beforeSend: function(){
+                        $("#loadingModal").modal("show");
+                    },
                     success: function (res) {
                         window.location = '@Url.Action("StartPage", "Main")';
                     },
                     error: function(res)
                     {
+                        $("#loadingModal").modal("hide");
+
                         var el = JSON.parse(res.responseText);
                         var mes = JSON.parse(el.Message);
 
                         for(var i = 0; i < mes.length; ++i)
                         {
-                            alert(mes[i].ErrorMessage);
+                            displayMessage("Error", mes[i].ErrorMessage);
                         }
                     }
                 });

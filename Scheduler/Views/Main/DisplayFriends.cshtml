@@ -1,0 +1,151 @@
+﻿@model IEnumerable<Scheduler.Models.Custom.UserInfo>
+@{
+    ViewBag.Title = "Display friends";
+    Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-sm-8 col-sm-push-2 col-xs-12 info_block">
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#friends">Friends (@Model.Count())</a></li>
+            <li><a data-toggle="tab" href="#online">Online (@Model.Where(x => x.IsOnline).Count())</a></li>
+            <li id="find_possible"><a data-toggle="tab" href="#possible">Possible</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div id="friends" style="max-height: 500px; min-height: 500px; overflow-y: scroll; overflow-x: hidden;" class="tab-pane fade in active">
+                <div class="row">
+                    <div class="col-sm-8 col-sm-push-2">
+                        @{
+                            bool ok = false;
+                            foreach (var friend in Model)
+                            {
+                                ok = true;
+                                <div class="row" onclick="goToFriendPage('@friend.Email')" style="margin: 10px; background-color: white; cursor:pointer; border-radius: 5px; padding: 10px;">
+                                    <div class="col-sm-3">
+                                        <img src="@String.Format("data:image/jpg;base64,{0}", Convert.ToBase64String(friend.Avatar))" class="img-responsive" />
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <h4 style="word-break: break-all">@friend.FirstName @friend.LastName</h4>
+                                        @if (friend.IsOnline)
+                                        {
+                                            <span class="label label-success">ONLINE</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">OFFLINE</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            if (!ok)
+                            {
+                                <p style="text-align: center">Look like you haven't added any friends yet.</p>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div id="online" style="max-height: 500px; min-height: 500px; overflow-y: scroll; overflow-x: hidden;" class="tab-pane fade">
+                <div class="row">
+                    <div class="col-sm-8 col-sm-push-2">
+                        @{
+                            ok = false;
+                            foreach (var friend in Model.Where(x => x.IsOnline))
+                            {
+                                ok = true;
+                                <div class="row" onclick="goToFriendPage('@friend.Email')" style="margin: 10px; background-color: white; border-radius: 5px; padding: 10px; cursor: pointer">
+                                    <div class="col-sm-3">
+                                        <img src="@String.Format("data:image/jpg;base64,{0}", Convert.ToBase64String(friend.Avatar))" class="img-responsive" />
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <h4 style="word-break: break-all">@friend.FirstName @friend.LastName</h4>
+                                        @if (friend.IsOnline)
+                                        {
+                                            <span class="label label-success">ONLINE</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">OFFLINE</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            if (!ok)
+                            {
+                                <p style="text-align: center">None of your friends are online</p>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div id="possible" style="max-height: 500px; min-height: 500px; overflow-y: scroll; overflow-x: hidden;" class="tab-pane fade">
+                <div class="row">
+                    <div class="col-sm-8 col-sm-push-2" id="possible_container">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script type="text/javascript">
+
+        function goToFriendPage(email) {
+            window.location = '/Main/ExternalAccountPage?email=' + email;
+        }
+
+        function getDivForPossibleFriend(obj) {
+            var toReturn = '<div class="row" onclick="goToFriendPage(\'' + obj.Item1.Email + '\')" style="margin: 10px; background-color: white; border-radius: 5px; padding: 10px; cursor: pointer;">'
+                            + '<div class="col-sm-3">'
+                            + '<img src="' + obj.Item3 + '" class="img-responsive" />'
+                            + '</div>'
+                            + '<div class="col-sm-6">'
+                            + '<h4 style="word-break: break-all">' + obj.Item1.FirstName + ' ' + obj.Item1.LastName + '</h4>'
+                            + '<p>' + obj.Item2 + ' common friends </p>';
+
+            if (obj.Item1.IsOnline) {
+                toReturn += '<span class="label label-success">ONLINE</span>';
+            }
+            else {
+                toReturn += '<span class="label label-default">OFFLINE</span>';
+            }
+
+            toReturn += '</div></div>';
+
+            return toReturn;
+        }
+
+        $(document).ready(function () {
+            $("#find_possible").click(function () {
+
+                if($("#possible_container").children().length != 0) return;
+
+                $.ajax({
+                    method: 'GET',
+                    url: '/Main/GetPossibleFriends',
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.length > 0) {
+                            for (var i = 0; i < res.length; ++i) {
+                                $("#possible_container").append(getDivForPossibleFriend(res[i]))
+                            }
+                        }
+                        else {
+                            $("#possible_container").append('<p style="text-align: center">We cannot find any possible friends for you. Please fill in some personal data to make search possible</p>');
+                        }
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+            });
+        });
+
+    </script>
+
+}

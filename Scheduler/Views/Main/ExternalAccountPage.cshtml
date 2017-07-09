@@ -1,0 +1,221 @@
+﻿@model Scheduler.Models.Custom.UserInfo
+@{
+    ViewBag.Title = "ExternalAccountPage";
+    Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+}
+<style>
+    .block_col {
+        padding: 15px;
+        margin: 5px;
+        background-color: antiquewhite;
+        box-shadow: 5px 5px 2px #888888;
+    }
+
+    .col {
+        padding: 15px;
+        margin: 5px;
+        background-color: antiquewhite;
+    }
+</style>
+<div class="row">
+    <div class="col col-sm-3 col-xs-5 block_col">
+        <img class="img-responsive" src="@ViewData["avatar"].ToString()" />
+    </div>
+    <div class="col col-xs-6 col-sm-8 block_col">
+        <div class="row">
+            <div class="col-sm-6 col-sm-push-3" style="word-break: break-all">
+                <h4 style="text-align: center">@Model.FirstName @Model.LastName</h4>
+                <p>Country: @Model.Country</p>
+                <p>Region:  @Model.Region</p>
+                <p>Settlement: @Model.Settlement</p>
+                <p>Profession: @Model.Profession</p>
+                <p>Interests: @Model.Interests</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col col-sm-3 block_col" id="buttons">
+
+    </div>
+    <div class="col col-sm-8 block_col">
+        <br />
+        <div id="posts_container">
+
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script src="//cdn.ckeditor.com/4.7.0/basic/ckeditor.js"></script>
+    <script type="text/javascript">
+
+        var lastId = 0;
+        var sendMore = true;
+
+        function deletePost(id) {
+            $.ajax({
+                method: 'DELETE',
+                url: '/api/UserInfo/DeletePost?id=' + id,
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                dataType: 'json',
+                success: function (res) {
+                    $("#post_" + id).remove();
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        }
+
+        function sendRequest() {
+
+            var toPass = {
+                LastId: lastId,
+                Email: '@ViewData["email"].ToString()'
+            };
+
+            $.ajax({
+                method: 'POST',
+                url: '/api/UserInfo/FindUserPosts',
+                dataType: "json",
+                data: JSON.stringify(toPass),
+                async: false,
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: "application/json; charset=utf-8",
+                success: function (res) {
+                    if (res.length > 0) {
+                        for (var i = 0; i < res.length; ++i) {
+                            if (res[i].Id > lastId) lastId = res[i].Id;
+                            $("#posts_container").append('<div id="post_' + res[i].Id + '" style="min-height: 150px; border: 1px solid black; word-break: break-all; margin: 10px" class="col-sm-12"><p> Added on: ' + res[i].AddingTime.split('T')[0] + ' ' + res[i].AddingTime.split('T')[1] + '</p><p>' + res[i].Text + '</p></div>');
+                        }
+                    }
+                    else sendMore = false;
+                },
+                error: function (res) {
+                    sendMore = false;
+                }
+            });
+        }
+
+        $(document).scroll(function () {
+            if ($(document).height() - ($(window).height() + $(window).scrollTop()) < 50) {
+                if (sendMore)
+                    sendRequest();
+            }
+        });
+
+        function checkForFriendRequest() {
+            $.ajax({
+                method: 'PUT',
+                url: '/api/Friends/GetUserSentRequests',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    var found = false;
+                    for(var i = 0; i < res.length; ++i)
+                    {
+                        if(res[i].RecipientMail == '@ViewData["email"].ToString()')
+                        {
+                            found = true;
+                            $("#buttons").append('<button type="button" class="btn custom-btn-success btn-block" onclick="removeFriendRequest()">Cancel Friend Request</button>');
+                        }
+                    }
+
+                    if (!found) {
+                        $("#buttons").append('<button type="button" class="btn custom-btn-success btn-block" onclick="addFriendRequest()">Request Friendship</button>');
+                    }
+
+                    $("#buttons").append('<button type="button" onclick="goToDialogue()" class="btn custom-btn-success btn-block">Write message</button>');
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        }
+
+        function addFriendRequest() {
+            $.ajax({
+                method: 'POST',
+                url: '/api/Friends/AddUserRequest?email=@ViewData["email"].ToString()',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    window.location = '@Url.Action("ExternalAccountPage", "Main", new { email = ViewData["email"].ToString() })';
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        }
+
+        function removeFriendRequest() {
+            $.ajax({
+                method: 'DELETE',
+                url: '/api/Friends/DeleteUserSentRequest?email=@ViewData["email"].ToString()',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    window.location = '@Url.Action("ExternalAccountPage", "Main", new { email = ViewData["email"].ToString() })';
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        }
+
+        function goToDialogue() {
+            window.location = '@Url.Action("DialoguePage", "Main", new { recipientMail = ViewData["email"]})'
+        }
+
+        $(document).ready(function () {
+            sendRequest();
+
+            if ($("#posts_container").children().length == 0)
+            {
+                $("#posts_container").append('<p style="text-align: center;">No posts on the wall were noticed.</p>');
+            }
+
+            $.ajax({
+                method: 'GET',
+                url: '/api/Friends/UserFriends',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    var found = false;
+                    for (var i = 0; i < res.length; ++i) {
+                        if ((res[i].FriendMail1 == '@User.Identity.Name' && res[i].FriendMail2 == '@ViewData["email"].ToString()') ||
+                            (res[i].FriendMail2 == '@User.Identity.Name' && res[i].FriendMail1 == '@ViewData["email"].ToString()')) {
+                            found = true;
+                            $("#buttons").append('<button type="button" onclick="goToDialogue()" class="btn custom-btn-success btn-block">Write message</button>');
+                            break;
+                        }
+                    }
+
+                    if (!found) checkForFriendRequest();
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        });
+
+    </script>
+}

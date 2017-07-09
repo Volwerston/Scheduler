@@ -5,43 +5,69 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace Scheduler.Models.Auxiliary
 {
-    public class DoneTargetTaskHandler : Handler
+    public class TargetTaskNotificationHandler : NotificationHandler
     {
-        public override bool CanHandle(SingleTask t)
+        public override bool CanHandle(Notification n)
         {
-            return !String.IsNullOrEmpty(t.TargetId) && t.Status == "Done";
+            return !String.IsNullOrEmpty(n.Type) && n.Type == "TargetTask";
         }
 
-        public override void Handle(SingleTask t, List<Tuple<DbTarget, DbTarget>> targets, string userEmail)
+        public override void Handle(Notification n, string status)
         {
             MongoClient client = new MongoClient();
             var db = client.GetDatabase("scheduler");
-            var collection = db.GetCollection<DbTarget>("targets");
+            var targets = db.GetCollection<DbTarget>("targets");
 
-            Tuple<DbTarget, DbTarget> tuple = targets.Where(x => x.Item2.Id == t.TargetId).Single();
-            tuple.Item2.ActiveDays = tuple.Item2.ActiveDays + 1;
-            tuple.Item2.Elapsed = tuple.Item2.Elapsed + 1;
-
-            if(tuple.Item2.ActiveDays == tuple.Item2.Duration)
+            if(status == "Done")
             {
-                if(tuple.Item2.NextTarget == null)
+
+                var bufTargets = targets.Find(Builders<DbTarget>.Filter.Where(x => x.UserEmail == n.UserEmail));
+                var userTargets = bufTargets.ToList();
+                List<Tuple<DbTarget, DbTarget>> currTargets = new List<Tuple<DbTarget, DbTarget>>();
+
+                foreach (var target in userTargets)
                 {
-                    HandleFinishedFinalTask(tuple, userEmail, db);
+                    DbTarget curr = target;
+
+                    while (curr != null)
+                    {
+                        if (curr.StartDate != default(DateTime) && curr.ActiveDays < curr.Duration && curr.WorkingDays.Contains(n.SendingTime.AddDays(-1.0).DayOfWeek))
+                        {
+                            currTargets.Add(new Tuple<DbTarget, DbTarget>(target, curr));
+                            break;
+                        }
+
+                        if (curr.StartDate == default(DateTime)) break;
+
+                        curr = curr.NextTarget;
+                    }
                 }
-                else
+
+                Tuple<DbTarget, DbTarget> tuple = currTargets.Where(x => x.Item2.Name == n.Title).SingleOrDefault();
+
+                if(tuple != default(Tuple<DbTarget, DbTarget>))
                 {
-                    HandleFinishedTask(tuple, userEmail, db);
+                    tuple.Item2.ActiveDays = tuple.Item2.ActiveDays + 1;
+
+                    if (tuple.Item2.ActiveDays == tuple.Item2.Duration)
+                    {
+                        if (tuple.Item2.NextTarget == null)
+                        {
+                            HandleFinishedFinalTask(tuple, n.UserEmail, db);
+                        }
+                        else
+                        {
+                            HandleFinishedTask(tuple, n.UserEmail, db);
+                        }
+                    }
+
+                    targets.FindOneAndReplace(x => x.Id == tuple.Item1.Id, tuple.Item1);
                 }
             }
-
-            collection.FindOneAndReplace(x => x.Id == tuple.Item1.Id, tuple.Item1);
-
-            targets.Remove(tuple);
         }
 
         public void HandleFinishedTask(Tuple<DbTarget, DbTarget> tuple, string userEmail, IMongoDatabase db)
@@ -65,7 +91,7 @@ namespace Scheduler.Models.Auxiliary
 
             col.InsertOne(td);
 
-            int bonus = 100*Convert.ToInt32(Math.Ceiling(Convert.ToDouble(tuple.Item2.ActiveDays / (tuple.Item2.Elapsed - (tuple.Item2.Difficulty - tuple.Item2.WeekendsRemained)))));
+            int bonus = 100 * Convert.ToInt32(Math.Ceiling(Convert.ToDouble(tuple.Item2.ActiveDays / (tuple.Item2.Elapsed - (tuple.Item2.Difficulty - tuple.Item2.WeekendsRemained)))));
 
             Notification n = new Notification()
             {
@@ -100,7 +126,7 @@ namespace Scheduler.Models.Auxiliary
             IMongoCollection<TaskDone> col = db.GetCollection<TaskDone>("tasksDone");
 
             col.InsertOne(td);
-            int bonus = 100 * Convert.ToInt32(Math.Ceiling(Convert.ToDouble(tuple.Item2.ActiveDays / (double) (tuple.Item2.Elapsed - (tuple.Item2.Difficulty - tuple.Item2.WeekendsRemained)))));
+            int bonus = 100 * Convert.ToInt32(Math.Ceiling(Convert.ToDouble(tuple.Item2.ActiveDays / (tuple.Item2.Elapsed - (tuple.Item2.Difficulty - tuple.Item2.WeekendsRemained)))));
 
             Notification n = new Notification()
             {

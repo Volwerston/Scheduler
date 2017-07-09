@@ -26,11 +26,12 @@
                             <li>@Html.ActionLink("New target", "CreateTarget", "Main", null, null)</li>
                             <li>@Html.ActionLink("Find targets", "SearchForTargets", "Main", null, null)</li>
                             <li>@Html.ActionLink("Schedule's constructor", "ScheduleConstructor", "Main", null, null)</li>
+                            <li>@Html.ActionLink("Friends", "DisplayFriends", "Main", null, null)</li>
                         </ul>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="#"><span class="glyphicon glyphicon-user"></span>Notifications</a></li>
+                    <li><a href="#" data-target="#notificationModal" data-toggle="modal" id="n_link">Notifications</a></li>
                     <li><a href="#" id="log_out"><span class="glyphicon glyphicon-log-in"></span> Log out</a></li>
                 </ul>
             </div>
@@ -44,8 +45,37 @@
         </footer>
     </div>
 
+    <div id="loadingModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-2 col-sm-push-5">
+                            <img src="~/Common/Images/ajax-loader.gif" style="display:inline;margin: auto" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="my_notifications" style="max-height: 300px; min-height: 300px; overflow-x: hidden; overflow-y: scroll">
+                </div>
+            </div>
+        </div>
+    </div>
+
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+    <script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+
     <script type="text/javascript">
 
         function deleteCookie(name) {
@@ -58,7 +88,128 @@
             if (parts.length == 2) return parts.pop().split(";").shift();
         }
 
+        function BuildTargetTaskNotification(obj) {
+            var toReturn = '<div class="col-sm-8 col-sm-push-2 col-xs-12" style="margin-top: 5px;padding: 10px; border: 1px solid black" id="notification_' + obj.Id + '">'
+                            + '<h3 style="text-align: center">' + obj.Title + '</h3>'
+                            + '<p style="text-align: center">' + obj.Body + '</p>'
+                            + '<p>Sent on: ' + obj.SendingTime.split('T')[0] + '</p>'
+                            + '<br/>'
+                            + '<p>You did not mark this task</p>'
+                            + 'Mark as: <input type="radio" value="Done" checked="checked" name="target_mark_' + obj.Id + '"> Done <input type="radio" value="Failed" name="target_mark_' + obj.Id + '"> Failed'
+                            + '<input type="button" class="btn btn-sm btn-success notification_control" value="OK" data-id="' + obj.Id + '" data-value="..."/>'
+                            + '</div>';
+
+            return toReturn;
+        }
+
+        function BuildFriendRequestNotification(obj) {
+            var toReturn = '<div class="col-sm-8 col-sm-push-2 col-xs-12" style="margin-top: 5px;padding: 10px; border: 1px solid black" id="notification_' + obj.Id + '">'
+                            + '<h3 style="text-align: center">' + obj.Title + '</h3>'
+                            + '<p style="text-align: center">' + obj.Body + '</p>'
+                            + '<p>Sent on: ' + obj.SendingTime.split('T')[0] + '</p>'
+                            + '<button type="button" data-id="' + obj.Id + '" data-value="Accept" class="btn btn-sm btn-success notification_control">Accept</button>'
+                            + '<button type="button" style="margin-left: 5px;" data-id="' + obj.Id + '" data-value="Reject" class="btn btn-sm btn-success notification_control">Reject</button>'
+                            + '</div>';
+
+            return toReturn;
+        }
+
+        function handleNotification(status, id) {
+            
+            var toPass = {
+                Status: status,
+                Id: id
+            };
+
+            $.ajax({
+                method: 'POST',
+                url: '/api/Notifications/Handle',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify(toPass),
+                success: function (res) {
+                    $("#notification_" + id).remove();
+
+                    if ($("#my_notifications").children().length > 1) {
+                        $("#notifications_num").html($("#my_notifications").children().length - 1);
+                    }
+                    else {
+                        $("#notifications_num").val("");
+                        $("#my_notifications").append('<p style="text-align: center">No notifications were found.</p>');
+                    }
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+        }
+
+        function BuildSingleNotification(obj) {
+            var toReturn = '<div class="col-sm-8 col-sm-push-2 col-xs-12" style="margin-top: 5px;padding: 10px; border: 1px solid black" id="notification_' + obj.Id + '">'
+                            + '<span data-id="' + obj.Id + '" data-value="Delete" class="notification_control glyphicon glyphicon-remove pull-right" style="cursor: pointer"></span>'
+                            + '<h3 style="text-align: center">' + obj.Title + '</h3>'
+                            + '<p style="text-align: center">' + obj.Body + '</p>'
+                            + '<p>Sent on: ' + obj.SendingTime.split('T')[0] + '</p>'
+                            + '</div>';
+
+            return toReturn;
+        }
+
+        function loadNotifications() {
+
+            if ($("#my_notifications").children().length == 0) {
+                $.ajax({
+                    method: 'GET',
+                    url: '/api/Notifications/GetNotifications',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.length > 0) {
+                            for (var i = 0; i < res.length; ++i) {
+                                if (res[i].Type.split('_')[0] == "TargetTask") {
+                                    $("#my_notifications").append(BuildTargetTaskNotification(res[i]));
+                                }
+                                else if (res[i].Type.split('_')[0] == "FriendRequest") {
+                                    $("#my_notifications").append(BuildFriendRequestNotification(res[i]));
+                                }
+                                else {
+                                    $("#my_notifications").append(BuildSingleNotification(res[i]));
+                                }
+                            }
+
+                            $("#n_link").append('<span class="label" id="notifications_num">' + res.length + '</span>');
+
+                            $("span.notification_control, button.notification_control").click(function () {
+                                handleNotification($(this).attr('data-value'), $(this).attr('data-id'));
+                            });
+
+                            $("input.notification_control").click(function () {
+                                var id = $(this).attr('data-id');
+                                var status = $('input[name="target_mark_' + id + '"]:checked').val();
+
+                                handleNotification(status, id);
+                            });
+                        }
+                        else {
+                            $("#my_notifications").append('<p style="text-align: center">No notifications were found.</p>');
+                        }
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+            }
+        }
+
         $(document).ready(function () {
+            var email = '@User.Identity.Name';
+
             $("#log_out").click(function () {
                 $.ajax({
                     method: 'POST',
@@ -68,13 +219,20 @@
                     },
                     success: function (res) {
                         deleteCookie('access_token');
-                        window.location = '@Url.Action("StartPage", "Main")';
+                        $("#loadingModal").modal("show");
+                        var myAppHub = $.connection.appHub;
+                        $.connection.hub.start().done(function () {
+                            myAppHub.server.deleteOnlineUser(email);
+                            window.location = '@Url.Action("StartPage", "Main")';
+                        });
                     },
                     error: function (res) {
                         alert("An error has occured");
                     }
                 });
             });
+
+            loadNotifications();
         });
 
         function displayMessage(aTitle, aText) {

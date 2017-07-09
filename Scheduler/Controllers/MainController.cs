@@ -1,6 +1,8 @@
 ﻿using MongoDB.Bson;
+using Newtonsoft.Json;
 using Scheduler.Models;
 using Scheduler.Models.Auxiliary;
+using Scheduler.Models.Custom;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +19,7 @@ namespace Scheduler.Controllers
 {
     public class MainController : Controller
     {
-        // GET: Main
+
         public ActionResult StartPage()
         {
             if (User.Identity.IsAuthenticated)
@@ -63,12 +65,288 @@ namespace Scheduler.Controllers
         [Authorize]
         public ActionResult AccountPage()
         {
-            return View();
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.GetAsync("/api/UserInfo/GetInfo?email=" + User.Identity.Name).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    UserInfo info = msg.Content.ReadAsAsync<UserInfo>().Result;
+
+                    if (info.Avatar == null)
+                    {
+                        using (FileStream s = new FileStream(Server.MapPath("~/Common/Images/empty_avatar.jpg"), FileMode.Open, FileAccess.Read))
+                        {
+                            info.Avatar = new byte[s.Length];
+                            s.Read(info.Avatar, 0, (int)s.Length);
+                        }
+                    }
+
+                    ViewData["avatar"] = String.Format("data:image/jpg;base64,{0}", Convert.ToBase64String(info.Avatar));
+
+                    return View(info);
+                }
+            }
+            return View("Error");
+        }
+
+        [Authorize]
+        public ActionResult ExternalAccountPage(string email)
+        {
+            if (email == User.Identity.Name) return RedirectToAction("AccountPage");
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.GetAsync("/api/UserInfo/GetInfo?email=" + email).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    UserInfo info = msg.Content.ReadAsAsync<UserInfo>().Result;
+
+                    if (info.Avatar == null)
+                    {
+                        using (FileStream s = new FileStream(Server.MapPath("~/Common/Images/empty_avatar.jpg"), FileMode.Open, FileAccess.Read))
+                        {
+                            info.Avatar = new byte[s.Length];
+                            s.Read(info.Avatar, 0, (int)s.Length);
+                        }
+                    }
+
+                    ViewData["email"] = email;
+                    ViewData["avatar"] = String.Format("data:image/jpg;base64,{0}", Convert.ToBase64String(info.Avatar));
+
+                    return View(info);
+                }
+            }
+            return View("Error");
         }
 
         public ActionResult ChangePassword()
         {
             return View();
+        }
+
+        [Authorize]
+        public string GetPossibleFriends()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.PutAsJsonAsync("/api/Friends/GetPossibleFriends", User.Identity.Name).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    List<Tuple<UserInfo, int>> returned = msg.Content.ReadAsAsync<List<Tuple<UserInfo, int>>>().Result;
+
+
+                    List<Tuple<UserInfo, int, string>> toPass = new List<Tuple<UserInfo, int, string>>();
+
+                    byte[] buf = null;
+
+                    for (int i = 0; i < returned.Count(); ++i)
+                    {
+                        if (returned[i].Item1.Avatar == null)
+                        {
+                            if (buf == null)
+                            {
+                                using (FileStream s = new FileStream(Server.MapPath("~/Common/Images/empty_avatar.jpg"), FileMode.Open, FileAccess.Read))
+                                {
+                                    buf = new byte[s.Length];
+                                    s.Read(buf, 0, (int)s.Length);
+                                }
+                            }
+
+                            toPass.Add(new Tuple<UserInfo, int, string>(returned[i].Item1, returned[i].Item2, String.Format("data:image/jpg;base64,{0}", Convert.ToBase64String(buf))));
+                        }
+                        else
+                        {
+                            toPass.Add(new Tuple<UserInfo, int, string>(returned[i].Item1, returned[i].Item2, String.Format("data:image/jpg;base64,{0}", Convert.ToBase64String(returned[i].Item1.Avatar))));
+                        }
+                    }
+
+                    return JsonConvert.SerializeObject(toPass);
+                }
+            }
+
+            return JsonConvert.SerializeObject(new List<Tuple<UserInfo, int, string>>());
+        }
+
+        [Authorize]
+        public ActionResult DisplayFriends()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.PostAsJsonAsync("/api/Friends/GetAllUserFriendsInfo", "").Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    List<UserInfo> users = msg.Content.ReadAsAsync<List<UserInfo>>().Result;
+                    byte[] buf = null;
+
+                    foreach (var user in users)
+                    {
+                        if (user.Avatar == null)
+                        {
+                            if (buf == null)
+                            {
+                                using (FileStream s = new FileStream(Server.MapPath("~/Common/Images/empty_avatar.jpg"), FileMode.Open, FileAccess.Read))
+                                {
+                                    buf = new byte[s.Length];
+                                    s.Read(buf, 0, (int)s.Length);
+                                }
+                            }
+
+                            user.Avatar = buf;
+                        }
+                    }
+
+                    return View(users);
+                }
+            }
+
+            return View("Error");
+        }
+
+        [Authorize]
+        public ActionResult DialogueMessages(string id)
+        {
+            List<Message> toProcess = new List<Message>();
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.PutAsJsonAsync("/api/Dialogues/GetMessages", id).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    toProcess = msg.Content.ReadAsAsync<List<Message>>().Result;
+                }
+            }
+
+            return PartialView(toProcess);
+        }
+
+        [Authorize]
+        public ActionResult DialoguePage(string recipientMail)
+        {
+            if (recipientMail == null) return View("Error");
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.GetAsync("/api/Dialogues/GetDialogue?mail=" + recipientMail).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    Dialogue d = msg.Content.ReadAsAsync<Dialogue>().Result;
+
+                    if(d == null)
+                    {
+                        d = new Dialogue()
+                        {
+                            Writer1 = new MessageWriter()
+                            {
+                                Email = User.Identity.Name,
+                                LastDeletionTime = DateTime.Now
+                            },
+                            Writer2 = new MessageWriter()
+                            {
+                                Email = recipientMail,
+                                LastDeletionTime = DateTime.Now
+                            },
+                            CreationTime = DateTime.Now
+                        };
+
+                        msg = client.PostAsJsonAsync("/api/Dialogues/AddDialogue", d).Result;
+
+                        if (!msg.IsSuccessStatusCode)
+                        {
+                            d = null;
+                        }
+                    }
+
+                    if (d != null)
+                    {
+                        return View(d);
+                    }
+                }
+            }
+
+            return View("Error");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public ActionResult PostUserAvatar(HttpPostedFileBase avatar)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                byte[] toPass = new byte[avatar.ContentLength];
+                avatar.InputStream.Read(toPass, 0, avatar.ContentLength);
+
+                HttpResponseMessage msg = client.PostAsJsonAsync("/api/UserInfo/PostAvatar", toPass).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("AccountPage");
+                }
+            }
+            return View("Error");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public ActionResult PostUserProfile(UserInfo info)
+        {
+            info.TimeZoneDescription = "GMT" + (info.TimeZone >= 0 ? "+" : "") + info.TimeZone + ":00";
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.PostAsJsonAsync("/api/UserInfo/PostProfile", info).Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("AccountPage");
+                }
+            }
+            return View("Error");
         }
 
         [HttpPost]
