@@ -72,6 +72,32 @@ namespace Scheduler.Controllers
             }
         }
 
+        [AllowAnonymous]
+        [Route("AddNewMessageNotification")]
+        public async Task<IHttpActionResult> Post([FromBody]Notification n)
+        {
+            try
+            {
+                MongoClient client = new MongoClient();
+                var db = client.GetDatabase("scheduler");
+                var collection = db.GetCollection<Notification>("notifications");
+
+                var query = await collection.FindAsync(Builders<Notification>.Filter.Where(x => x.Title == n.Title));
+                Notification not = query.FirstOrDefault();
+
+                if (not == null)
+                {
+                    await collection.InsertOneAsync(n);
+                }
+
+                return Ok("Success");
+            }
+            catch(Exception e)
+            {
+                return InternalServerError(e);
+            }
+        }
+
         private async Task PopulateDbAsync(IMongoCollection<Notification> collection)
         {
             List<Notification> toAdd = new List<Notification>()

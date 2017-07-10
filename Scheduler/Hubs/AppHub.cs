@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Runtime.Caching;
 using Microsoft.AspNet.SignalR;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using Scheduler.Models.Custom;
 
 namespace Scheduler.Hubs
 {
@@ -39,6 +42,33 @@ namespace Scheduler.Hubs
             {
                 return false;
             }
+        }
+
+        public void NewMessageReceived(string SenderMail, string RecipientMail, string SenderName, DateTime SendingTime, string Message, string DialogueId)
+        {
+            if(!IsUserOnline(RecipientMail))
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.BaseAddress = new Uri("http://localhost:24082");
+
+                    Notification toAdd = new Notification()
+                    {
+                        Body = String.Format("<a href=\"/Main/DialoguePage?recipientMail={0}\">{1}</a> sent you a new message", SenderMail, SenderName),
+                        Seen = false,
+                        SendingTime = DateTime.Now,
+                        Title = "New message",
+                        Type = String.Format("NewMessage_{0}_{1}", DialogueId, RecipientMail),
+                        UserEmail = RecipientMail     
+                    };
+
+                    HttpResponseMessage msg = client.PostAsJsonAsync("/api/Notifications/AddNewMessageNotification", toAdd).Result;
+                }
+            }
+
+            Clients.All.notifyOfMessage(SenderMail, RecipientMail, SenderName, SendingTime, Message, DialogueId);
         }
 
         public bool DeleteOnlineUser(string email)

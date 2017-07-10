@@ -2,12 +2,19 @@
 @{
     ViewBag.Title = "Dialogue page";
     Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+
+    string otherMail = Model.Writer1.Email == User.Identity.Name ? Model.Writer2.Email : Model.Writer1.Email;
+    string senderName = Model.Writer1.Email == User.Identity.Name ? 
+        Model.Writer2.Name + " " + Model.Writer2.Surname : 
+        Model.Writer1.Name + " " + Model.Writer1.Surname;
+
+
 }
 
 <div class="row">
     <div class="col-sm-8 col-sm-push-2 col-xs-12 info_block">
         <div id="messages_container" style="max-height: 500px; min-height: 500px; overflow-x:hidden; overflow-y: scroll; margin: 15px; padding: 15px;">
-
+            <p style="text-align: center">Loading messages...</p>
         </div>
         <br/>
         <br/>
@@ -36,11 +43,13 @@
                 url: '/Main/DialogueMessages?id=@Model.Id',
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
-                success: function(res){
+                success: function (res) {
+                    $("#messages_container").empty();
                     $("#messages_container").append(res);
                 },
-                error: function(res){
-                    $("#messages_container").append('<p style="text-align: center">No messages were found</p>');
+                error: function (res) {
+                    $("#messages_container").empty();
+                    $("#messages_container").append(res.responseText);
                 }
             });
 
@@ -57,7 +66,9 @@
                     DialogueId: '@Model.Id',
                     Text: text,
                     SenderMail: '@User.Identity.Name',
-                    SendingTime: new Date()
+                    SendingTime: new Date(),
+                    FirstName: '@senderName.Split(' ')[0]',
+                    LastName: '@senderName.Split(' ')[1]'
                 };
 
                 $.ajax({
@@ -70,10 +81,16 @@
                     dataType: 'json',
                     data: JSON.stringify(toPass),
                     success: function (res) {
-                        window.location = '@Url.Action("DialoguePage", "Main", new
-                                      {
-                                          recipientMail = Model.Writer1.Email == User.Identity.Name ? Model.Writer2.Email : Model.Writer1.Email
-                                      })';
+                        var aHub = $.connection.appHub;
+                        $.connection.hub.start().done(function () {
+
+                            aHub.server.newMessageReceived('@User.Identity.Name', '@otherMail', '@senderName', toPass.SendingTime, toPass.Text, '@Model.Id');
+
+                            window.location = '@Url.Action("DialoguePage", "Main", new
+                            {
+                                recipientMail = Model.Writer1.Email == User.Identity.Name ? Model.Writer2.Email : Model.Writer1.Email
+                            })';
+                        });
                     },
                     error: function (res) {
                         displayMessage("Error", "Internal server error");

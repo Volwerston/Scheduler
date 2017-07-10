@@ -16,5 +16,7 @@ namespace Scheduler.Models.Custom
         public string Text { get; set; }
         public string SenderMail { get; set; }
         public DateTime SendingTime { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
     }
 }

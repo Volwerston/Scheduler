@@ -15,5 +15,7 @@ namespace Scheduler.Models.Custom
         public DateTime CreationTime { get; set; }
         public MessageWriter Writer1 { get; set; }
         public MessageWriter Writer2 { get; set; }
+        public DateTime LastMessageTime { get; set; }
+        public string LastMessageSender { get; set; }
     }
 }

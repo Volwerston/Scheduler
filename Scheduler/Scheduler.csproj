@@ -295,6 +295,7 @@
     <Compile Include="Models\Auxiliary\NotificationHandler.cs" />
     <Compile Include="Models\Auxiliary\NotificationHandlerParams.cs" />
     <Compile Include="Models\Auxiliary\OmmitedTargetTaskHandler.cs" />
+    <Compile Include="Models\Auxiliary\RemoveDialogueParams.cs" />
     <Compile Include="Models\Auxiliary\SingleTaskHandler.cs" />
     <Compile Include="Models\Auxiliary\TargetTaskNotificationHandler.cs" />
     <Compile Include="Models\Auxiliary\UnformedScheduleMailService.cs" />
@@ -415,6 +416,7 @@
     <Content Include="Views\Main\DisplayFriends.cshtml" />
     <Content Include="Views\Main\DialoguePage.cshtml" />
     <Content Include="Views\Main\DialogueMessages.cshtml" />
+    <Content Include="Views\Main\UserDialogues.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

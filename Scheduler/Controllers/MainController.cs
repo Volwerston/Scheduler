@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
@@ -250,6 +251,59 @@ namespace Scheduler.Controllers
         }
 
         [Authorize]
+        public ActionResult UserDialogues()
+        {
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+                HttpResponseMessage msg = client.GetAsync("/api/Dialogues/GetDialoguesInfo").Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    List<Tuple<Dialogue, UserInfo>> info = msg.Content.ReadAsAsync<List<Tuple<Dialogue, UserInfo>>>().Result;
+
+                    List<Tuple<Dialogue, UserInfo>> toPass = new List<Tuple<Dialogue, UserInfo>>();
+
+                    foreach (var el in info)
+                    {
+                        byte[] arr = null;
+
+                        if (el.Item2.Avatar == null)
+                        {
+                            if (arr == null)
+                            {
+                                using (FileStream s = new FileStream(Server.MapPath("~/Common/Images/empty_avatar.jpg"), FileMode.Open, FileAccess.Read))
+                                {
+                                    arr = new byte[s.Length];
+                                    s.Read(arr, 0, (int)s.Length);
+                                }
+                            }
+
+                            toPass.Add(new Tuple<Dialogue, UserInfo>(el.Item1, new UserInfo()
+                            {
+                                FirstName = el.Item2.FirstName,
+                                LastName = el.Item2.LastName,
+                                Avatar = arr
+                            }));
+                        }
+                        else
+                        {
+                            toPass.Add(el);
+                        }
+                    }
+
+                    return View(toPass);
+                }
+            }
+
+            return View("Error");
+        }
+
+        [Authorize]
         public ActionResult DialoguePage(string recipientMail)
         {
             if (recipientMail == null) return View("Error");
@@ -267,7 +321,7 @@ namespace Scheduler.Controllers
                 {
                     Dialogue d = msg.Content.ReadAsAsync<Dialogue>().Result;
 
-                    if(d == null)
+                    if (d == null)
                     {
                         d = new Dialogue()
                         {
@@ -496,9 +550,9 @@ namespace Scheduler.Controllers
                 client.BaseAddress = new Uri("http://localhost:24082");
                 HttpResponseMessage msg = await client.PostAsJsonAsync("/api/Schedule/GetSchedule", userTime);
 
-                if(msg.IsSuccessStatusCode)
+                if (msg.IsSuccessStatusCode)
                 {
-                    Schedule s = msg.Content.ReadAsAsync<Schedule>().Result;    
+                    Schedule s = msg.Content.ReadAsAsync<Schedule>().Result;
                     return PartialView("_DayTasks", s);
                 }
             }

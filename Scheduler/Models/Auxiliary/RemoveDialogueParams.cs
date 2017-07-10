@@ -5,11 +5,10 @@ using System.Web;
 
 namespace Scheduler.Models.Auxiliary
 {
-    public class MessageWriter
+    public class RemoveDialogueParams
     {
-        public string Email { get; set; }
-        public string Name { get; set; }
-        public string Surname { get; set; }
+        public string DialogueId { get; set; }
         public DateTime LastDeletionTime { get; set; }
+        public string UserEmail { get; set; }
     }
 }

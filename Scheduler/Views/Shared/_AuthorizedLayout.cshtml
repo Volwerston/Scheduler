@@ -7,6 +7,18 @@
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 </head>
+
+@{
+    string id = null;
+    try
+    {
+        id = Model.Id;
+    }
+    catch
+    {
+        id = "";
+    }
+}
 <body style="background-color: #77CED4;">
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="container">
@@ -27,6 +39,7 @@
                             <li>@Html.ActionLink("Find targets", "SearchForTargets", "Main", null, null)</li>
                             <li>@Html.ActionLink("Schedule's constructor", "ScheduleConstructor", "Main", null, null)</li>
                             <li>@Html.ActionLink("Friends", "DisplayFriends", "Main", null, null)</li>
+                            <li>@Html.ActionLink("Dialogues", "UserDialogues", "Main", null, null)</li>
                         </ul>
                     </li>
                 </ul>
@@ -78,6 +91,49 @@
 
     <script type="text/javascript">
 
+        var myHub = $.connection.appHub;
+        myHub.client.notifyOfMessage = function (senderMail, recipientMail, senderName, sendingTime, message, dialogueId) {
+            if ('@ViewBag.Title' == "Dialogue page") {
+                if ('@User.Identity.Name' == recipientMail && dialogueId == '@id') {
+
+                    if ($("#messages_container div").children().length == 0) {
+                        $("#messages_container p").remove();
+                    }
+
+                    $("#messages_container").prepend('<div class="row" style="margin: 10px;">'
+                                                    + '<div class="col-sm-8 col-sm-push-2 col-xs-12" style="border: 2px solid green; border-radius: 5px;">'
+                                                    + '<div class="row" style="margin: 10px;">'
+                                                    + '<div class="col-sm-6 col-xs-12" style="word-break: break-all">'
+                                                    + '<b>' + senderName + '</b>'
+                                                    + '</div>'
+                                                    + '<div class="col-sm-5 col-xs-12" style="word-break: break-all">'
+                                                    + 'Sent on: ' + new Date(sendingTime).getDate() + "." + ((new Date(sendingTime).getMonth() + 1) < 10 ? "0" : "") + (new Date(sendingTime).getMonth() + 1) + "." + new Date(sendingTime).getFullYear() + " " + sendingTime.split('T')[1].substr(0, 8)
+                                                    + '</div>'
+                                                    + '</div>'
+                                                    + '<div class="row" style="background-color: aliceblue;padding: 10px; margin-top: 10px; max-width: 415px; overflow-x: scroll;">'
+                                                    + message
+                                                    + '</div></div></div>'
+                )
+                }
+                else if ('@User.Identity.Name' == recipientMail && dialogueId != '@id') {
+                    displayMessage("New Message", senderName + " sent you a new message");
+                }
+            }
+            else if ('@ViewBag.Title' == "User dialogues") {
+                if ('@User.Identity.Name' == recipientMail || '@User.Identity.Name' == senderMail)
+                {
+                    window.location = '@Url.Action("UserDialogues", "Main")';
+                }
+            }
+            else {
+                if ('@User.Identity.Name' == recipientMail) {
+                    displayMessage("New Message", senderName + " sent you a new message");
+                }
+            }
+        }
+
+        $.connection.hub.start();
+
         function deleteCookie(name) {
             document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         }
@@ -115,7 +171,7 @@
         }
 
         function handleNotification(status, id) {
-            
+
             var toPass = {
                 Status: status,
                 Id: id
