@@ -40,6 +40,7 @@
                             <li>@Html.ActionLink("Schedule's constructor", "ScheduleConstructor", "Main", null, null)</li>
                             <li>@Html.ActionLink("Friends", "DisplayFriends", "Main", null, null)</li>
                             <li>@Html.ActionLink("Dialogues", "UserDialogues", "Main", null, null)</li>
+                            <li>@Html.ActionLink("Premium account", "PremiumAccount", "Main", null, null)</li>
                         </ul>
                     </li>
                 </ul>
@@ -145,6 +146,7 @@
         }
 
         function BuildTargetTaskNotification(obj) {
+
             var toReturn = '<div class="col-sm-8 col-sm-push-2 col-xs-12" style="margin-top: 5px;padding: 10px; border: 1px solid black" id="notification_' + obj.Id + '">'
                             + '<h3 style="text-align: center">' + obj.Title + '</h3>'
                             + '<p style="text-align: center">' + obj.Body + '</p>'

@@ -11,7 +11,7 @@
   <StartPageBlockData>
     <Id>block2</Id>
     <Title>1. Plan your day</Title>
-    <Description>Pretty good resource for organising your daily activity</Description>
+    <Description>Create signle task units and monitor you accomplishments</Description>
     <ColorName>#77A1D3</ColorName>
     <NextBlock>#block3</NextBlock>
     <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
@@ -19,7 +19,7 @@
   <StartPageBlockData>
     <Id>block3</Id>
     <Title>2. Set new targets</Title>
-    <Description>Pretty good resource for organising your daily activity</Description>
+    <Description>Break complicated targets into smaller ones and track all of them one by one</Description>
     <ColorName>#26a0da</ColorName>
     <NextBlock>#block4</NextBlock>
     <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
@@ -27,7 +27,7 @@
   <StartPageBlockData>
     <Id>block4</Id>
     <Title>3. Meet like-minders</Title>
-    <Description>Pretty good resource for organising your daily activity</Description>
+    <Description>Find people with common interests and mutual friends in order to discuss current affairs or exchange ideas</Description>
     <ColorName>#06beb6</ColorName>
     <NextBlock>#block5</NextBlock>
     <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
@@ -35,7 +35,7 @@
   <StartPageBlockData>
     <Id>block5</Id>
     <Title>4. Analyze your productivity</Title>
-    <Description>Pretty good resource for organising your daily activity</Description>
+    <Description>Look at your statistics over the period of time</Description>
     <ColorName>#ffaf7b</ColorName>
     <NextBlock>#block6</NextBlock>
     <ArrowImageSrc>../../Common/Images/arrow_down.png</ArrowImageSrc>
@@ -43,7 +43,7 @@
   <StartPageBlockData>
     <Id>block6</Id>
     <Title>5. Get useful tips</Title>
-    <Description>Pretty good resource for organising your daily activity</Description>
+    <Description>Find solutions of problems which are similar to those you are currently facing</Description>
     <ColorName>#ff8235</ColorName>
     <NextBlock>#block1</NextBlock>
     <ArrowImageSrc>../../Common/Images/arrow_up.png</ArrowImageSrc>

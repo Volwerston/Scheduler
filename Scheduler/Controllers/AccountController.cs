@@ -325,6 +325,28 @@ namespace Scheduler.Controllers
             return logins;
         }
 
+        [Route("UserBonuses")]
+        public async Task<IHttpActionResult> Get()
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(System.Web.Configuration.WebConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
+                {
+                    SqlCommand cmd = new SqlCommand("Select Bonus from AspNetUsers Where Email=@mail", con);
+                    cmd.Parameters.AddWithValue("@mail", User.Identity.Name);
+
+                    con.Open();
+                    var res = await cmd.ExecuteScalarAsync();
+
+                    return Ok((int)res);
+                }
+            }
+            catch(Exception e)
+            {
+                return InternalServerError(e);
+            }
+        }
+
         [AllowAnonymous]
         [HttpPost]
         public async Task<HttpResponseMessage> SetNewUserPassword(Tuple<string, string, string> data)

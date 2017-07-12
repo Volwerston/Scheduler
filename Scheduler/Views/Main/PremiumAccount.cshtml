@@ -1,0 +1,511 @@
+﻿@model IEnumerable<Scheduler.Models.Custom.Algorithm>
+@{
+    ViewBag.Title = "Premium account";
+    Layout = "~/Views/Shared/_AuthorizedLayout.cshtml";
+
+    string[] ids = new string[Model.Count()];
+
+    ids[0] = Model.Where(x => x.Title == "Similar problems search").Single().Id;
+    ids[1] = Model.Where(x => x.Title == "Working time analysis").Single().Id;
+    ids[2] = Model.Where(x => x.Title == "Daily statistics").Single().Id;
+}
+
+<style>
+    path {
+        stroke: steelblue;
+        stroke-width: 1;
+        fill: none;
+    }
+
+    .axis {
+        shape-rendering: crispEdges;
+    }
+
+    .x.axis line {
+        stroke: lightgrey;
+    }
+
+    .x.axis .minor {
+        stroke-opacity: .5;
+    }
+
+    .x.axis path {
+        display: none;
+    }
+
+    .y.axis line, .y.axis path {
+        fill: none;
+        stroke: #000;
+    }
+</style>
+
+
+
+
+
+<h2 style="text-align: center; color: antiquewhite; font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">Accessible Algorithms</h2>
+<h2 id="bonuses" style="text-align: center; color: antiquewhite; font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif"></h2>
+<p style="text-align: center; color: antiquewhite; font-weight: bold; font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">In order to purchase any algorithm, simply click it</p>
+<div class="row">
+    <div class="col-sm-8 col-sm-push-2 col-xs-12 info_block">
+        <div class="panel-group" id="accordion">
+            <div class="panel panel-default" data-duration="@Model.Where(x => x.Id == ids[0]).Single().Duration" id="algo_panel_@ids[0]">
+                <div class="panel-heading locked" id="panel_heading_@ids[0]" title="@Model.Where(x => x.Id == ids[0]).Single().Description">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" id="collapse_controller_@ids[0]" data-parent="#accordion" href="#collapse_@ids[0]">
+                            SIMILAR PROBLEMS SEARCH <label id="collapse_label_@ids[0]" data-value="@Model.Where(x => x.Id == ids[0]).Single().Bonuses" class="label pull-right label-info">Buy for @Model.Where(x => x.Id == ids[0]).Single().Bonuses  bonuses</label>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapse_@ids[0]" hidden="hidden" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        <div class="form-horizontal">
+                            <div class="form-group" style="display: table; margin: auto">
+                                <input type="text" placeholder="Target title" class="form-control" name="target_name" />
+                            </div>
+                            <div class="form-group" style="display: table; margin: auto; margin-top: 10px;">
+                                <input type="submit" value="Find" id="find_targets" class="btn btn-success" />
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 15px">
+                            <div class="col-sm-10 col-sm-push-1 col-xs-12" id="targets_container">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default" data-duration="@Model.Where(x => x.Id == ids[1]).Single().Duration" id="algo_panel_@ids[1]">
+                <div class="panel-heading locked" id="panel_heading_@ids[1]" title="@Model.Where(x => x.Id == ids[1]).Single().Description">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" id="collapse_controller_@ids[1]" data-parent="#accordion" href="#collapse_@ids[1]">
+                            WORKING TIME ANALYSIS <label id="collapse_label_@ids[1]" data-value="@Model.Where(x => x.Id == ids[1]).Single().Bonuses" class="label pull-right label-info">Buy for @Model.Where(x => x.Id == ids[1]).Single().Bonuses  bonuses</label>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapse_@ids[1]" hidden="hidden" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-4 col-sm-push-4">
+                                <button type="button" class="btn btn-success btn-block" id="working_stats">Search</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <h3 style="text-align: center">Done tasks (per minute)</h3>
+                                <svg id="svg_done">
+
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <h3 style="text-align: center">Failed tasks (per minute)</h3>
+                                <svg id="svg_failed">
+
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <h3 style="text-align: center">Unmarked tasks (per minute)</h3>
+                                <svg id="svg_unmarked">
+
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default" data-duration="@Model.Where(x => x.Id == ids[2]).Single().Duration" id="algo_panel_@ids[2]">
+                <div class="panel-heading locked" id="panel_heading_@ids[2]" title="@Model.Where(x => x.Id == ids[2]).Single().Description">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" id="collapse_controller_@ids[2]" data-parent="#accordion" href="#collapse_@ids[2]">
+                            DAILY STATISTICS <label id="collapse_label_@ids[2]" data-value="@Model.Where(x => x.Id == ids[2]).Single().Bonuses" class="label pull-right label-info">Buy for @Model.Where(x => x.Id == ids[2]).Single().Bonuses  bonuses</label>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapse_@ids[2]" hidden="hidden" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        <div class="form-horizontal">
+                            <div class="form-group" style="display: table;margin: auto">
+                                <input type="date" class="form-control" id="search_date" />
+                            </div>
+                            <div class="form-group" style="display: table; margin: auto; margin-top: 10px;">
+                                <button type="button" class="btn btn-success" id="find_date_stats">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 10px" id="date_container">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+
+    <script src="http://mbostock.github.com/d3/d3.v2.js"></script>
+    <script type="text/javascript">
+
+        var purchaseId = null;
+
+        function makeData() {
+            return d3.range(1).map(function (item) {
+                return Math.floor(Math.random() * 100) + 1;
+            });
+        };
+
+        var colorLock = {},
+            arcLock = {};
+
+        function paths(percentages) {
+            return percentages.map(function (percent) {
+                var degrees = (percent / 100) * 360.0;
+                var radians = degrees * (Math.PI / 180);
+                var data = { value: percent, startAngle: 0, endAngle: radians };
+                return data;
+            });
+        }
+
+        function path2(percent) {
+            var degrees = (percent / 100) * 360.0;
+            var paths = d3.range(1, degrees).map(function (degree) {
+                var startRadians = (degree - 1) * (Math.PI / 180);
+                var endRadians = degree * (Math.PI / 180);
+                var data = { index: degree, value: percent, startAngle: startRadians, endAngle: endRadians };
+                return data;
+            })
+            return paths;
+        }
+
+        function pathName(path) { return path.data; }
+
+        function render(g, svg, percent) {
+            g.datum(percent).selectAll("path").data(paths).transition().duration(1000);//.attrTween("d", arcTween);
+            svg.datum(percent).selectAll("text").data(paths).text(function (d) { return d.value + '%'; });
+        }
+
+        function colTween(final) {
+            var interpTo = d3.interpolateRgb(this._color, color(final.value / 100));
+            this._color = interpTo(1);
+            return function (next) {
+                return interpTo(next);
+            };
+        }
+
+        function buildArc(id, percent, w, svgExists, divId, fontSize) {
+            var color = d3.scale.linear()
+        .domain([0, 0.5, 1])
+        .range(["red", "yellow", "green"]);
+
+
+            var h = w;
+
+            var outerRadius = w / 2;
+            var innerRadius = (w / 2) * (80 / 100);
+            var arc = d3.svg.arc()
+                            .innerRadius(innerRadius)
+                            .outerRadius(outerRadius);
+
+            var svg = null;
+
+            if (svgExists) {
+                //Create SVG element
+                svg = d3.select("#" + id);
+            }
+            else {
+                svg = d3.select("#" + divId)
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h)
+                .attr("style", "display: block; margin: auto;");
+            }
+
+
+            var g = svg.append('g')
+                .attr('transform', 'translate(' + w / 2 + ',' + h / 2 + ')');
+
+            g.datum(percent).selectAll("path")
+                .data(paths)
+            .enter()
+                .append("path")
+                .attr("fill", "#F20100")
+                .attr("d", arc)
+            .each(function (d) { this._current = d; });
+
+            svg.datum(percent).selectAll("text")
+                .data(paths)
+            .enter()
+                .append("text")
+                .attr("length", "50pc")
+                .attr("style", "font-family: 'Source Sans Pro', sans-serif;font-size: " + fontSize + "pt;fill: black;")
+                .attr("transform", function (d) {
+                    return "translate(" + w / 2 + ", " + h / 1.6 + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text(function (d) { return d.value; });
+
+            render(g, svg, percent);
+        }
+
+        function fillSvg(name, data) {
+            var m = [80, 80, 80, 80];
+            var w = 1000 - m[1] - m[3];
+            var h = 400 - m[0] - m[2];
+
+            var x = d3.scale.linear().domain([0, data.length]).range([0, w]);
+            var y = d3.scale.linear().domain([0, d3.max(data)]).range([h, 0]);
+            var line = d3.svg.line()
+                .x(function (d, i) {
+                    return x(i);
+                })
+                .y(function (d) {
+                    return y(d);
+                })
+
+            var graph = d3.select("#svg_" + name)
+                  .attr("width", w + m[1] + m[3])
+                  .attr("height", h + m[0] + m[2])
+                .append("svg:g")
+                  .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+
+            var xAxis = d3.svg.axis().scale(x).ticks(15).tickSize(-h).tickSubdivide(true);
+
+            graph.append("svg:g")
+                  .attr("class", "x axis")
+                  .attr("transform", "translate(0," + h + ")")
+                  .call(xAxis);
+
+            var yAxisLeft = d3.svg.axis().scale(y).ticks(4).orient("left");
+            graph.append("svg:g")
+                  .attr("class", "y axis")
+                  .attr("transform", "translate(-25,0)")
+                  .call(yAxisLeft);
+            graph.append("svg:path").attr("d", line(data));
+        }
+
+        $(document).ready(function () {
+            $.ajax({
+                method: 'GET',
+                url: '/api/Account/UserBonuses',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    $("#bonuses").append("You have " + res + " bonuses");
+                    $("#bonuses").attr("data-value", res);
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+
+            $.ajax({
+                method: 'PUT',
+                url: '/api/Algorithms/GetUserAlgoLog',
+                headers: {
+                    Authorization: 'Bearer ' + getCookie('access_token')
+                },
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    for (var i = 0; i < res.length; ++i) {
+                        $("#algo_panel_" + res[i].AlgorithmId).removeClass("panel-default").addClass("panel-success");
+                        $("#panel_heading_" + res[i].AlgorithmId).removeClass("locked");
+                        $("#collapse_" + res[i].AlgorithmId).removeAttr("hidden");
+                        $("#collapse_label_" + res[i].AlgorithmId).removeClass("label-default").addClass("label-success").html("Available from " + res[i].StartTime.split('T')[0] + " " + res[i].StartTime.split('T')[1].substr(0, 8) + " till " + res[i].StartTime.split('T')[0] + " " + res[i].StartTime.split('T')[1].substr(0, 8));
+                    }
+
+                    $('.locked').click(function (e) {
+
+                        var id = $(this).attr('id').split('_')[2];
+
+                        if ($("#collapse_" + id).is(":hidden")) {
+                            e.preventDefault();
+
+                            var required = parseInt($("#collapse_label_" + id).attr("data-value"));
+                            var exist = parseInt($("#bonuses").attr("data-value"));
+
+                            if (exist < required) {
+                                displayMessage("Warning", "You do not have enough bonuses for purchasing this algorithm");
+                                return;
+                            }
+
+                            var duration = parseInt($("#algo_panel_" + id).attr("data-duration"));
+
+                            var currTime = new Date();
+
+                            var toPass = {
+                                AlgorithmId: id,
+                                UserEmail: '@User.Identity.Name',
+                                StartTime: currTime,
+                                EndTime: new Date(currTime.getTime() + duration * 60000)
+                            };
+
+                            $.ajax({
+                                method: 'POST',
+                                url: '/api/Algorithms/AddLogEntry',
+                                headers: {
+                                    Authorization: 'Bearer ' + getCookie('access_token')
+                                },
+                                contentType: 'application/json; charset=utf-8',
+                                dataType: 'json',
+                                data: JSON.stringify(toPass),
+                                success: function (res) {
+                                    window.location = '@Url.Action("PremiumAccount", "Main")';
+                                },
+                                error: function (res) {
+                                    displayMessage("Error", "Internal server error");
+                                }
+                            });
+                        }
+                    });
+                },
+                error: function (res) {
+                    displayMessage("Error", "Internal server error");
+                }
+            });
+
+
+            $("#working_stats").click(function () {
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Algorithms/WorkingTimeAnalysis',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    success: function (res) {
+
+                        $("#working_stats").hide();
+
+                        for (var i = 0; i < res.length; ++i) {
+                            fillSvg(res[i].m_Item1, res[i].m_Item2);
+                        }
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+            });
+
+            $("#find_date_stats").click(function () {
+
+                if ($("#search_date").val() == "") {
+                    displayMessage("Warning", "Please fill in the date form");
+                    return;
+                }
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Algorithms/DailyStats',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify($("#search_date").val()),
+                    success: function (res) {
+                        $("#date_container").empty();
+                        if (res == null) {
+                            $("#date_container").append('<p style="text-align: center;">No data was found for this day</p>')
+                        }
+                        else {
+                            var overallTime = 0;
+                            var workedTime = 0;
+                            var failedTasks = 0;
+                            var doneTasks = 0;
+                            var unknownTasks = 0;
+                            var currTaskFound = false;
+                            var nextTask = null;
+                            var currTask = null;
+
+                            for (var i = 0; i < res.Tasks.length; ++i) {
+                                var et = new Date("01.01.0001 " + res.Tasks[i].EndTime);
+                                var st = new Date("01.01.0001 " + res.Tasks[i].StartTime);
+                                overallTime += et.getHours() * 60 + et.getMinutes() - st.getHours() * 60 - st.getMinutes();
+
+                                switch (res.Tasks[i].Status) {
+                                    case "Done":
+                                        ++doneTasks;
+                                        workedTime += et.getHours() * 60 + et.getMinutes() - st.getHours() * 60 - st.getMinutes();
+                                        break;
+                                    case "Failed":
+                                        ++failedTasks;
+                                        break;
+                                    default:
+                                        ++unknownTasks;
+                                        break;
+                                }
+                            }
+
+                            $("#date_container").append('<div class="col-sm-3 col-xs-12" id="chart1"><h3 style="text-align: center">Tasks done</h3></div><div class="col-sm-3 col-xs-12" id="chart2"><h3 style="text-align: center">Working time</h3></div><div id="stats_info" class="col-sm-4 col-xs-12"><h3 style="text-align: center;">Statistics</h3></div>');
+                            $("#stats_info").append('<p style="text-align: center">Done tasks: ' + doneTasks + '</p>');
+                            $("#stats_info").append('<p style="text-align: center">Failed tasks: ' + failedTasks + '</p>');
+                            $("#stats_info").append('<p style="text-align: center">Tasks in progress: ' + unknownTasks + '</p>');
+                            $("#stats_info").append('<p style="text-align: center">Time of all tasks: ' + Math.floor(overallTime / 60) + 'h ' + overallTime % 60 + 'm </p>');
+                            $("#stats_info").append('<p style="text-align: center">Time you worked: ' + Math.floor(workedTime / 60) + 'h ' + workedTime % 60 + 'm </p>');
+
+                            var performance = 100*((doneTasks / (failedTasks + doneTasks + unknownTasks)).toFixed(2));
+                            var workingTime = 100*((workedTime / overallTime).toFixed(2));
+
+                            buildArc(null, [performance], 150, false, "chart1", 30);
+                            buildArc(null, [workingTime], 150, false, "chart2", 30);
+                        }
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+
+            });
+
+            $("#find_targets").click(function () {
+                if ($('input[name="target_name"]').val().trim() == "") {
+                    displayMessage("Warning", "Please fill in the target's title field");
+                    return;
+                }
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/Algorithms/FindCommonTargets',
+                    headers: {
+                        Authorization: 'Bearer ' + getCookie('access_token')
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify($('input[name="target_name"]').val().trim()),
+                    success: function (res) {
+                        $("#targets_container").empty();
+
+                        if (res.length > 0) {
+                            for (var i = 0; i < res.length; ++i) {
+                                if (res[i].NextTaskName != null) {
+                                    $("#targets_container").append('<div class="row"><div class="col-sm-8 col-sm-push-2 col-xs-12" style="border: 1px solid black; margin: 10px; padding: 10px;"><h3 style="text-aign:center">' + res[i].TaskName + '</h3><p>' + res[i].Solution + '</p><h4>Next target: ' + res[i].NextTaskName + '</h4></div></div>');
+                                }
+                                else {
+                                    $("#targets_container").append('<div class="row"><div class="col-sm-8 col-sm-push-2 col-xs-12" style="border: 1px solid black; margin: 10px; padding: 10px;"><h3 style="text-aign:center">' + res[i].TaskName + '</h3><p>' + res[i].Solution + '</p></div></div>');
+                                }
+                            }
+                        }
+                        else {
+                            $("#targets_container").append('<p style="text-align: center">No targets were found</p>');
+                        }
+                    },
+                    error: function (res) {
+                        displayMessage("Error", "Internal server error");
+                    }
+                });
+            });
+        });
+    </script>
+}

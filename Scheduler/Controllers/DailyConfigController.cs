@@ -75,15 +75,8 @@ namespace Scheduler.Controllers
         [Route("ConfigureTasks")]
         public async Task<IHttpActionResult> Post()
         {
-
-            if (IsDayProceeded(DateTime.Now.AddDays(-1.0)))
-            {
-                return Ok("Success");
-            }
-
             try
             {
-
                 int neededTimeOffset = 24 - DateTime.Now.Hour + TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).Hours;
                 if (neededTimeOffset > 12) neededTimeOffset -= 12;
 
@@ -199,8 +192,6 @@ namespace Scheduler.Controllers
                         scheduleCollection.InsertOne(schedule);               
                 }
 
-                AddDateToJournal(DateTime.Now.AddDays(-1.0));
-
                 return Ok("Success");
             }
             catch (Exception e)
@@ -224,7 +215,7 @@ namespace Scheduler.Controllers
                 SqlDataReader rdr = cmd.ExecuteReader();
                 while (rdr.Read())
                 {
-                    toReturn.Add(rdr["Email"].ToString());
+                    toReturn.Add(rdr["UserEmail"].ToString());
                 }
             }
 

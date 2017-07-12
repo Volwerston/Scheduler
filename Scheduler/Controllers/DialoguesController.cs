@@ -43,8 +43,14 @@ namespace Scheduler.Controllers
                 MongoClient client = new MongoClient();
                 var db = client.GetDatabase("scheduler");
                 var collection = db.GetCollection<Message>("messages");
+                var dialogues = db.GetCollection<Dialogue>("dialogues");
 
-                List<Message> messages = await collection.FindAsync(Builders<Message>.Filter.Where(x => x.DialogueId == id)).Result.ToListAsync();
+                var query = await dialogues.FindAsync(Builders<Dialogue>.Filter.Where(x => x.Id == id));
+                Dialogue d = query.SingleOrDefault();
+
+                DateTime lastDeletionTime = User.Identity.Name == d.Writer1.Email ? d.Writer1.LastDeletionTime : d.Writer2.LastDeletionTime;
+
+                List<Message> messages = await collection.FindAsync(Builders<Message>.Filter.Where(x => x.DialogueId == id && x.SendingTime > lastDeletionTime)).Result.ToListAsync();
 
                 return Ok(messages.OrderByDescending(x => x.SendingTime).ToList());
             }

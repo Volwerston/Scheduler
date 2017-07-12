@@ -194,3 +194,4 @@ C:\Users\User\Desktop\Scheduler\Scheduler\bin\Microsoft.AspNet.SignalR.Core.xml
 C:\Users\User\Desktop\Scheduler\Scheduler\bin\Microsoft.AspNet.SignalR.SystemWeb.xml
 C:\Users\User\Desktop\Scheduler\Scheduler\bin\Revalee.Client.xml
 C:\Users\User\Desktop\Scheduler\Scheduler\bin\Revalee.Client.Mvc.xml
+C:\Users\User\Desktop\Scheduler\Scheduler\bin\FuzzyString.dll

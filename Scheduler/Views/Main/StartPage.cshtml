@@ -3,6 +3,7 @@
 @{
     ViewBag.Title = "StartPage";
     Layout = "~/Views/Shared/_LandingPageLayout.cshtml";
+    int counter = 1;
 }
 
 @foreach (var el in (List<StartPageBlockData>)ViewBag.BlocksData)
@@ -11,7 +12,7 @@
     new ViewDataDictionary(){
         new KeyValuePair<string, object>("title", el.Title),
         new KeyValuePair<string, object>("description", el.Description),
-        new KeyValuePair<string, object>("colorName", el.ColorName),
+        new KeyValuePair<string, object>("num", counter++),
         new KeyValuePair<string, object>("nextBlock", el.NextBlock),
         new KeyValuePair<string, object>("id", el.Id),
         new KeyValuePair<string, object>("arrowImageSrc", el.ArrowImageSrc)

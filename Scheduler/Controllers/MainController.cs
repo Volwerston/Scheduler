@@ -304,6 +304,30 @@ namespace Scheduler.Controllers
         }
 
         [Authorize]
+        public ActionResult PremiumAccount()
+        {
+            List<Algorithm> toPass = new List<Algorithm>();
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                client.BaseAddress = new Uri("http://localhost:24082");
+
+                HttpResponseMessage msg = client.GetAsync("/api/Algorithms/GetAlgorithms").Result;
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    toPass = msg.Content.ReadAsAsync<List<Algorithm>>().Result;
+                    return View(toPass);
+                }
+            }
+
+            return View("Error");
+        }
+
+        [Authorize]
         public ActionResult DialoguePage(string recipientMail)
         {
             if (recipientMail == null) return View("Error");
@@ -360,23 +384,31 @@ namespace Scheduler.Controllers
         [HttpPost]
         public ActionResult PostUserAvatar(HttpPostedFileBase avatar)
         {
-            using (HttpClient client = new HttpClient())
+            if (avatar != null)
             {
-                client.DefaultRequestHeaders.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
-                client.BaseAddress = new Uri("http://localhost:24082");
-
-                byte[] toPass = new byte[avatar.ContentLength];
-                avatar.InputStream.Read(toPass, 0, avatar.ContentLength);
-
-                HttpResponseMessage msg = client.PostAsJsonAsync("/api/UserInfo/PostAvatar", toPass).Result;
-
-                if (msg.IsSuccessStatusCode)
+                using (HttpClient client = new HttpClient())
                 {
-                    return RedirectToAction("AccountPage");
+                    client.DefaultRequestHeaders.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Cookies["access_token"].Value);
+                    client.BaseAddress = new Uri("http://localhost:24082");
+
+                    byte[] toPass = new byte[avatar.ContentLength];
+                    avatar.InputStream.Read(toPass, 0, avatar.ContentLength);
+
+                    HttpResponseMessage msg = client.PostAsJsonAsync("/api/UserInfo/PostAvatar", toPass).Result;
+
+                    if (msg.IsSuccessStatusCode)
+                    {
+                        return RedirectToAction("AccountPage");
+                    }
                 }
             }
+            else
+            {
+                return RedirectToAction("AccountPage");
+            }
+
             return View("Error");
         }
 

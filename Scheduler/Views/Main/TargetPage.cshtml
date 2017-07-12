@@ -19,7 +19,7 @@
     {
         activeDays += targets[i].ActiveDays;
         workingDays += targets[i].Duration;
-        elapsedDays += targets[i].Elapsed - (targets[i].Difficulty - targets[i].WeekendsRemained);
+        elapsedDays += targets[i].Elapsed;
     }
 
     performance = (activeDays / (double)workingDays) * 100;
@@ -203,14 +203,6 @@
             svg.datum(percent).selectAll("text").data(paths).text(function (d) { return d.value + '%'; });
         }
 
-        //function arcTween(a) {
-        //    var i = d3.interpolate(this._current, a);
-        //    this._current = i(0);
-        //    return function (t) {
-        //        return arc(i(t));
-        //    };
-        //}
-
         function colTween(final) {
             var interpTo = d3.interpolateRgb(this._color, color(final.value / 100));
             this._color = interpTo(1);
@@ -294,8 +286,8 @@
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Days elapsed: ' + obj.Elapsed + '</p>'
                     + '<p style="font-family: sans-serif; font-weight: bold; color: black; text-align: center;">Active days: ' + obj.ActiveDays + '</p>');
 
-            var currPerformance = parseFloat(obj.ActiveDays / obj.Duration);
-            var currEfficiency =  obj.Elapsed != 0 ? parseFloat(obj.ActiveDays / (obj.Elapsed - (obj.Difficulty - obj.WeekendsRemained))) : 0;
+            var currPerformance = 100*(parseFloat(obj.ActiveDays / obj.Duration).toFixed(2));
+            var currEfficiency =  obj.Elapsed != 0 ? 100*(parseFloat(obj.ActiveDays / (obj.Elapsed)).toFixed(2)) : 0;
 
             buildArc(null, [currPerformance], 150, false, "subtarget_performance", 30);
             buildArc(null, [currEfficiency], 150, false, "subtarget_efficiency", 30);

@@ -64,6 +64,9 @@
 
         $(document).ready(function () {
             var ok = false;
+
+            $(".start-view-block").css("height", $(window).height());
+
             $("#sign_in").click(function () {
                 $.ajax({
                     method: "POST",
@@ -90,6 +93,7 @@
                         });
                     },
                     error: function (xhr, error, message) {
+                        displayMessage("Warning", "Login and/or password is incorrect")
                     }
                 });
             });
